@@ -2,20 +2,18 @@
 --	  	Copyright © 2021
 --	  	This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
 --	  	https://creativecommons.org/licenses/by-sa/4.0/
-local rest = nil
+local restChar = nil
 local addEffect = nil
-
-function customRest(bLong)
+function customRestChar(nodeActor, bLong)
 	if bLong then
-		for _,nodeActor in pairs(CombatManager.getCombatantNodes()) do
-			for _,nodeEffect in pairs(DB.getChildren(nodeActor, "effects")) do
-				if  DB.getValue(nodeEffect, "isactive", 0) == 1 then
-					exhaustionRest(nodeEffect,nodeActor)
-				end
+		local nodeCT = ActorManager.getCTNode(nodeActor)
+		for _,nodeEffect in pairs(DB.getChildren(nodeCT, "effects")) do
+			if  DB.getValue(nodeEffect, "isactive", 0) == 1 then
+				exhaustionRest(nodeEffect,nodeCT)
 			end
 		end
 	end
-	rest(bLong)
+	restChar(nodeActor, bLong)
 end
 
 function exhaustionRest(nodeEffect, nodeActor)
@@ -82,7 +80,7 @@ function customAddEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg)
 	if nExhaustionLevel > 0  then
 		local aCancelled = EffectManager5E.checkImmunities(nil, nodeCT, rNewEffect)
 		if #aCancelled > 0 then
-			local sMessage = string.format("%s ['%s'] -> [%s]", Interface.getString("effect_label"), rNewEffect.sName, Interface.getString("effect_status_targetimmune"));
+			local sMessage = string.format("%s ['%s'] -> [%s]", Interface.getString("effect_label"), rNewEffect.sName, Interface.getString("effect_status_targetimmune"))
 			EffectManager.message(sMessage, nodeCT, false, sUser);
 			return
 		end
@@ -99,7 +97,7 @@ function sumExhaustion(rNewEffect, nodeCT, nodeEffectsList, nExhaustionLevel)
 	local bSummed = false
 	for k, nodeEffect in pairs(nodeEffectsList.getChildren()) do
 		if  DB.getValue(nodeEffect, "isactive", 0) == 1 then
-			local sEffect = DB.getValue(nodeEffect, "label", "");
+			local sEffect = DB.getValue(nodeEffect, "label", "")
 			local aEffectComps = EffectManager.parseEffect(sEffect)
 			for i,sEffectComp in ipairs(aEffectComps) do
 				local rEffectComp = EffectManager.parseEffectCompSimple(sEffectComp)
@@ -155,19 +153,25 @@ function exhaustionText(sEffect, nodeCT,  nLevel)
 		end
 		sEffect = sEffect .. sHPMax ..tostring(math.ceil(nHPMax / 2)) 
 		sEffect = sEffect .. sSpeed ..tostring(math.ceil(nSpeed / 2)) 
-	elseif (nLevel >= 5) then
+	elseif (nLevel == 5) then
 		if OptionsManager.isOption("VERBOSE_EXHAUSTION", "on") then
 			sEffect = sEffect .. sDisSave
 		end
 		sEffect = sEffect .. sHPMax ..tostring(math.ceil(nHPMax / 2))
+		sEffect = sEffect .. sSpeed .. tostring(nSpeed)
+	elseif (nLevel >= 6) then
+		if OptionsManager.isOption("VERBOSE_EXHAUSTION", "on") then
+			sEffect = sEffect .. sDisSave
+		end
+		sEffect = sEffect .. sHPMax ..tostring(nHPMax)
 		sEffect = sEffect .. sSpeed .. tostring(nSpeed)
 	end
 	return sEffect
 end
 
 function onInit()
-	rest = CombatManager2.rest
-	CombatManager2.rest = customRest
+	restChar = CharManager.rest
+	CharManager.rest = customRestChar
 	addEffect = EffectManager.addEffect
 	EffectManager.addEffect = customAddEffect
 
@@ -182,6 +186,5 @@ end
 
 function onClose()
 	EffectManager.addEffect = addEffect
-	CombatManager2.rest = rest
-
+	CharManager.rest = restChar
 end
