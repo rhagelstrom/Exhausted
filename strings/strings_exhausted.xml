@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<!--
+  	Author: Ryan Hagelstrom
+	Copyright � 2021
+	This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
+	https://creativecommons.org/licenses/by-sa/4.0/
+-->
+<root>
+	<string name="option_Exhaustion_Verbose">Verbose Exhaustion</string>
+
+</root>
