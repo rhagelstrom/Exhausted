@@ -4,6 +4,8 @@
 --	  	https://creativecommons.org/licenses/by-sa/4.0/
 local restChar = nil
 local addEffect = nil
+local applyDamage = nil
+
 function customRestChar(nodeActor, bLong)
 	if bLong then
 		local nodeCT = ActorManager.getCTNode(nodeActor)
@@ -169,11 +171,37 @@ function exhaustionText(sEffect, nodeCT,  nLevel)
 	return sEffect
 end
 
+function customApplyDamage(rSource, rTarget, bSecret, sDamage, nTotal) 
+	if OptionsManager.isOption("EXHAUSTION_HEAL", "on") then
+		local bIsDieing = false  
+		local sTargetNodeType, nodeTarget = ActorManager.getTypeAndNode(rTarget)
+		if not nodeTarget then
+			return applyDamage(rSource, rTarget, bSecret, sDamage, nTotal)
+		end
+		nTotalHP = DB.getValue(nodeTarget, "hp.total", 0)
+		nWounds = DB.getValue(nodeTarget, "hp.wounds", 0)
+		if nTotalHP == nWounds then
+			bIsDieing = true 
+		end
+		applyDamage(rSource, rTarget, bSecret, sDamage, nTotal)
+		nWounds = DB.getValue(nodeTarget, "hp.wounds", 0)
+		if nTotalHP > nWounds and bIsDieing == true then
+			EffectManager.addEffect("", "", ActorManager.getCTNode(rTarget), { sName = "Exhaustion", nDuration = 0 }, true)
+		end
+	else
+		applyDamage(rSource, rTarget, bSecret, sDamage, nTotal)
+	end
+end
+
 function onInit()
 	restChar = CharManager.rest
 	CharManager.rest = customRestChar
+
 	addEffect = EffectManager.addEffect
 	EffectManager.addEffect = customAddEffect
+
+	applyDamage = ActionDamage.applyDamage
+	ActionDamage.applyDamage = customApplyDamage
 
 	table.insert(DataCommon.conditions, "exhaustion")
 	table.sort(DataCommon.conditions)
@@ -182,9 +210,14 @@ function onInit()
 	"option_Exhaustion_Verbose", "option_entry_cycler", 
 	{ labels = "option_val_on", values = "on",
 		baselabel = "option_val_off", baseval = "off", default = "off" })  
+	OptionsManager.registerOption2("EXHAUSTION_HEAL", false, "option_header_houserule", 
+		"option_Exhaustion_Heal", "option_entry_cycler", 
+		{ labels = "option_val_on", values = "on",
+			baselabel = "option_val_off", baseval = "off", default = "off" })  
 end
 
 function onClose()
 	EffectManager.addEffect = addEffect
 	CharManager.rest = restChar
+	ActionDamage.applyDamage = applyDamage
 end

@@ -8,5 +8,6 @@
 -->
 <root>
 	<string name="option_Exhaustion_Verbose">Verbose Exhaustion</string>
+	<string name="option_Exhaustion_Heal">Add Exhaustion if heal from 0 HP</string>
 
 </root>
