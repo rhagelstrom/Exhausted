@@ -5,6 +5,7 @@
 local restChar = nil
 local addEffect = nil
 local applyDamage = nil
+local parseEffects = nil
 
 function customRestChar(nodeActor, bLong)
 	if bLong then
@@ -193,6 +194,44 @@ function customApplyDamage(rSource, rTarget, bSecret, sDamage, nTotal)
 	end
 end
 
+function customParseEffect(sPowerName, aWords)
+	local effects = parseEffects(sPowerName,aWords)
+	local i = 1;
+	while aWords[i] do
+		if StringManager.isWord(aWords[i],  {"gain","gains","suffer","suffers" }) then
+			local bExhaustion = true
+			local sLevel = "0"
+			if StringManager.isWord(aWords[i+1],  { "1", "one" }) then
+				sLevel = "1"
+			elseif StringManager.isWord(aWords[i+1],  { "2", "two" }) then
+				sLevel = "2"
+			elseif StringManager.isWord(aWords[i+1],  { "3", "three" }) then
+				sLevel = "3"
+			elseif StringManager.isWord(aWords[i+1],  { "4", "four" }) then
+				sLevel = "4"
+			elseif StringManager.isWord(aWords[i+1],  { "5", "five" }) then
+				sLevel = "5"
+			elseif StringManager.isWord(aWords[i+1],  { "6", "six" }) then
+				sLevel = "6"
+			else
+				bExhaustion = false
+			end
+			if bExhaustion == true and 
+				StringManager.isWord(aWords[i+2], {"level", "levels"}) and
+				StringManager.isWord(aWords[i+3], "of") and
+				StringManager.isWord(aWords[i+4], "exhaustion") then
+					local rExhaustion = {}
+					rExhaustion.sName = "EXHAUSTION: " .. sLevel
+					rExhaustion.startindex = i
+					rExhaustion.endindex = i+4
+					PowerManager.parseEffectsAdd(aWords, i, rExhaustion, effects)
+				end
+		end
+		i = i+1
+	end
+	return effects
+end
+
 function onInit()
 	restChar = CharManager.rest
 	CharManager.rest = customRestChar
@@ -202,6 +241,9 @@ function onInit()
 
 	applyDamage = ActionDamage.applyDamage
 	ActionDamage.applyDamage = customApplyDamage
+
+	parseEffects = PowerManager.parseEffects
+	PowerManager.parseEffects = customParseEffect
 
 	table.insert(DataCommon.conditions, "exhaustion")
 	table.sort(DataCommon.conditions)
@@ -220,4 +262,5 @@ function onClose()
 	EffectManager.addEffect = addEffect
 	CharManager.rest = restChar
 	ActionDamage.applyDamage = applyDamage
+	PowerManager.parseEffects = parseEffects
 end
