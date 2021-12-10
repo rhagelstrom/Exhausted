@@ -173,8 +173,8 @@ function exhaustionText(sEffect, nodeCT,  nLevel)
 end
 
 function customApplyDamage(rSource, rTarget, bSecret, sDamage, nTotal) 
-	if OptionsManager.isOption("EXHAUSTION_HEAL", "on") then
-		local bIsDieing = false  
+	if not OptionsManager.isOption("EXHAUSTION_HEAL", "off") then
+		local bDead = false  
 		local sTargetNodeType, nodeTarget = ActorManager.getTypeAndNode(rTarget)
 		if not nodeTarget then
 			return applyDamage(rSource, rTarget, bSecret, sDamage, nTotal)
@@ -182,12 +182,13 @@ function customApplyDamage(rSource, rTarget, bSecret, sDamage, nTotal)
 		nTotalHP = DB.getValue(nodeTarget, "hp.total", 0)
 		nWounds = DB.getValue(nodeTarget, "hp.wounds", 0)
 		if nTotalHP == nWounds then
-			bIsDieing = true 
+			bDead = true 
 		end
 		applyDamage(rSource, rTarget, bSecret, sDamage, nTotal)
 		nWounds = DB.getValue(nodeTarget, "hp.wounds", 0)
-		if nTotalHP > nWounds and bIsDieing == true then
-			EffectManager.addEffect("", "", ActorManager.getCTNode(rTarget), { sName = "Exhaustion", nDuration = 0 }, true)
+		if nTotalHP > nWounds and bDead == true then
+			local sExhaustion = "EXHAUSTION: " .. OptionsManager.getOption("EXHAUSTION_HEAL")
+			EffectManager.addEffect("", "", ActorManager.getCTNode(rTarget), { sName = sExhaustion, nDuration = 0 }, true)
 		end
 	else
 		applyDamage(rSource, rTarget, bSecret, sDamage, nTotal)
@@ -198,10 +199,10 @@ function customParseEffect(sPowerName, aWords)
 	local effects = parseEffects(sPowerName,aWords)
 	local i = 1;
 	while aWords[i] do
-		if StringManager.isWord(aWords[i],  {"gain","gains","suffer","suffers" }) then
+		if StringManager.isWord(aWords[i],  {"gain","gains","suffer","suffers", "take" }) then
 			local bExhaustion = true
 			local sLevel = "0"
-			if StringManager.isWord(aWords[i+1],  { "1", "one" }) then
+			if StringManager.isWord(aWords[i+1],  { "1", "one", "another" }) then
 				sLevel = "1"
 			elseif StringManager.isWord(aWords[i+1],  { "2", "two" }) then
 				sLevel = "2"
@@ -254,8 +255,13 @@ function onInit()
 		baselabel = "option_val_off", baseval = "off", default = "off" })  
 	OptionsManager.registerOption2("EXHAUSTION_HEAL", false, "option_header_houserule", 
 		"option_Exhaustion_Heal", "option_entry_cycler", 
-		{ labels = "option_val_on", values = "on",
-			baselabel = "option_val_off", baseval = "off", default = "off" })  
+		{ 	
+			labels = "one|two|three|four|five|six", 
+			values = "1|2|3|4|5|6",
+			baselabel = "option_val_off", 
+			baseval = "off", 
+			default = "off" 
+		})  
 end
 
 function onClose()

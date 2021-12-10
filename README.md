@@ -1,6 +1,6 @@
 # Exhausted
-**Current Version:** 1.3
-**Last Updated:** 11/28/21
+**Current Version:** 1.4
+**Last Updated:** 12/09/21
 
 5E extension for FantasyGrounds that adds exhaustion as a condition as well as immunities to the exhaustion condition
 
@@ -15,4 +15,4 @@ NPC Sheets and spells will automatically parse exhaustion as a condition with th
   * Verbose exhaustion text to further support MNM Character Sheet Effects Display.
  * **Add Exhaustion if heal from 0 HP** House Rules (GM)
     * Default: off
-    * Add a level of exhaustion to an actor that heals from zero hit points
+    * Add specified levels of exhaustion to an actor that heals from zero hit points
