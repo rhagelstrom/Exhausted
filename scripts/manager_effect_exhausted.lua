@@ -176,11 +176,11 @@ function customApplyDamage(rSource, rTarget, bSecret, sDamage, nTotal)
 	if not OptionsManager.isOption("EXHAUSTION_HEAL", "off") then
 		local bDead = false  
 		local sTargetNodeType, nodeTarget = ActorManager.getTypeAndNode(rTarget)
-		if not nodeTarget then
+		if not nodeTarget or sTargetNodeType ~= "pc" then
 			return applyDamage(rSource, rTarget, bSecret, sDamage, nTotal)
 		end
-		nTotalHP = DB.getValue(nodeTarget, "hp.total", 0)
-		nWounds = DB.getValue(nodeTarget, "hp.wounds", 0)
+		local nTotalHP = DB.getValue(nodeTarget, "hp.total", 0)
+		local nWounds = DB.getValue(nodeTarget, "hp.wounds", 0)
 		if nTotalHP == nWounds then
 			bDead = true 
 		end

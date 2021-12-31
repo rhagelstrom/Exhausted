@@ -1,6 +1,6 @@
 # Exhausted
-**Current Version:** 1.4
-**Last Updated:** 12/09/21
+**Current Version:** 1.5
+**Last Updated:** 12/31/21
 
 5E extension for FantasyGrounds that adds exhaustion as a condition as well as immunities to the exhaustion condition
 
