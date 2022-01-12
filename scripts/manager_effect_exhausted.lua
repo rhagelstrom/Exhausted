@@ -6,6 +6,7 @@ local restChar = nil
 local addEffect = nil
 local applyDamage = nil
 local parseEffects = nil
+local reduceExhaustion = nil
 
 function customRestChar(nodeActor, bLong)
 	if bLong then
@@ -124,6 +125,10 @@ function updateEffect(nodeActor, nodeEffect, sLabel)
 	local bGMOnly = EffectManager.isGMEffect(nodeActor, nodeEffect)
 	local sMessage = string.format("%s ['%s'] -> [%s]", Interface.getString("effect_label"), sLabel, Interface.getString("effect_status_updated"))
 	EffectManager.message(sMessage, nodeActor, bGMOnly)
+end
+
+-- Disable SW code to reduce exhaustion on Rest
+function customReduceExhaustion()
 end
 
 --Add extra text and also comptibility with Mad Nomads Character Sheet Effects Display Extension
@@ -245,6 +250,9 @@ function onInit()
 
 	parseEffects = PowerManager.parseEffects
 	PowerManager.parseEffects = customParseEffect
+	
+	reduceExhaustion = CombatManager2.reduceExhaustion
+	CombatManager2.reduceExhaustion = customReduceExhaustion
 
 	table.insert(DataCommon.conditions, "exhaustion")
 	table.sort(DataCommon.conditions)
@@ -269,4 +277,5 @@ function onClose()
 	CharManager.rest = restChar
 	ActionDamage.applyDamage = applyDamage
 	PowerManager.parseEffects = parseEffects
+	CombatManager2.reduceExhaustion = reduceExhaustion
 end
