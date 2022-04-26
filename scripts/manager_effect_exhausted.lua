@@ -29,7 +29,7 @@ function exhaustionRest(nodeEffect, nodeActor)
 			local nExhaustionLevel = tonumber(rEffectComp.mod) - 1
 			if  nExhaustionLevel >= 1 then
 				rEffectComp.mod =  tostring(nExhaustionLevel)
-				aEffectComps[i] = rEffectComp.type .. ": " .. rEffectComp.mod							
+				aEffectComps[i] = rEffectComp.type .. ": " .. rEffectComp.mod
 				sEffect = EffectManager.rebuildParsedEffect(aEffectComps)
 				sEffect = exhaustionText(sEffect, nodeActor, nExhaustionLevel)
 				updateEffect(nodeActor, nodeEffect, sEffect)
@@ -46,7 +46,7 @@ function cleanExhaustionEffect(rNewEffect)
 	local bHasType = false
 
 	local aEffectComps = EffectManager.parseEffect(rNewEffect.sName)
-	for i,sEffectComp in ipairs(aEffectComps) do
+	for _,sEffectComp in ipairs(aEffectComps) do
 		local rEffectComp = EffectManager.parseEffectCompSimple(sEffectComp)
 		if string.lower(sEffectComp) == "exhaustion"  then
 			bHasLabel = true
@@ -88,7 +88,7 @@ function customAddEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg)
 			EffectManager.message(sMessage, nodeCT, false, sUser);
 			return
 		end
-		if  EffectManager5E.hasEffectCondition(nodeCT, "Exhaustion") and sumExhaustion(rNewEffect, nodeCT, nodeEffectsList, nExhaustionLevel) then
+		if  EffectManager5E.hasEffectCondition(nodeCT, "Exhaustion") and sumExhaustion(nodeCT, nodeEffectsList, nExhaustionLevel) then
 			return
 		else
 			rNewEffect.sName = exhaustionText(rNewEffect.sName, nodeCT, nExhaustionLevel)
@@ -97,25 +97,25 @@ function customAddEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg)
 	addEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg)
 end
 
-function sumExhaustion(rNewEffect, nodeCT, nodeEffectsList, nExhaustionLevel)
+function sumExhaustion(nodeCT, nodeEffectsList, nExhaustionLevel)
 	local bSummed = false
-	for k, nodeEffect in pairs(nodeEffectsList.getChildren()) do
+	for _, nodeEffect in pairs(nodeEffectsList.getChildren()) do
 		if  DB.getValue(nodeEffect, "isactive", 0) == 1 then
 			local sEffect = DB.getValue(nodeEffect, "label", "")
 			local aEffectComps = EffectManager.parseEffect(sEffect)
 			for i,sEffectComp in ipairs(aEffectComps) do
 				local rEffectComp = EffectManager.parseEffectCompSimple(sEffectComp)
 				if rEffectComp.type == "EXHAUSTION" and rEffectComp.mod ~= nil  then
-					local nExhaustionLevel =tonumber(rEffectComp.mod) + nExhaustionLevel
-					rEffectComp.mod = tostring(nExhaustionLevel)
+					local nExhaustionLvl = tonumber(rEffectComp.mod) + nExhaustionLevel
+					rEffectComp.mod = tostring(nExhaustionLvl)
 					aEffectComps[i] = rEffectComp.type .. ": " .. rEffectComp.mod
 					sEffect = EffectManager.rebuildParsedEffect(aEffectComps)
-					sEffect = exhaustionText(sEffect, nodeCT, nExhaustionLevel)
+					sEffect = exhaustionText(sEffect, nodeCT, nExhaustionLvl)
 					updateEffect(nodeCT, nodeEffect, sEffect)
 					bSummed = true
 				end
 			end
-		end					
+		end
 	end
 	return bSummed
 end
@@ -149,18 +149,18 @@ function exhaustionText(sEffect, nodeCT,  nLevel)
 		sEffect = sEffect .. sDisCheck
 	end
 	if (nLevel == 2) then
-		sEffect = sEffect .. sSpeed ..tostring(math.ceil(nSpeed / 2)) 
+		sEffect = sEffect .. sSpeed ..tostring(math.ceil(nSpeed / 2))
 	elseif (nLevel == 3) then
 		if OptionsManager.isOption("VERBOSE_EXHAUSTION", "on") then
 			sEffect = sEffect .. sDisSave
 		end
-		sEffect = sEffect .. sSpeed ..tostring(math.ceil(nSpeed / 2)) 
+		sEffect = sEffect .. sSpeed ..tostring(math.ceil(nSpeed / 2))
 	elseif (nLevel == 4) then
 		if OptionsManager.isOption("VERBOSE_EXHAUSTION", "on") then
 			sEffect = sEffect .. sDisSave
 		end
-		sEffect = sEffect .. sHPMax ..tostring(math.ceil(nHPMax / 2)) 
-		sEffect = sEffect .. sSpeed ..tostring(math.ceil(nSpeed / 2)) 
+		sEffect = sEffect .. sHPMax ..tostring(math.ceil(nHPMax / 2))
+		sEffect = sEffect .. sSpeed ..tostring(math.ceil(nSpeed / 2))
 	elseif (nLevel == 5) then
 		if OptionsManager.isOption("VERBOSE_EXHAUSTION", "on") then
 			sEffect = sEffect .. sDisSave
@@ -177,9 +177,9 @@ function exhaustionText(sEffect, nodeCT,  nLevel)
 	return sEffect
 end
 
-function customApplyDamage(rSource, rTarget, bSecret, sDamage, nTotal) 
+function customApplyDamage(rSource, rTarget, bSecret, sDamage, nTotal)
 	if not OptionsManager.isOption("EXHAUSTION_HEAL", "off") then
-		local bDead = false  
+		local bDead = false
 		local sTargetNodeType, nodeTarget = ActorManager.getTypeAndNode(rTarget)
 		if not nodeTarget or sTargetNodeType ~= "pc" then
 			return applyDamage(rSource, rTarget, bSecret, sDamage, nTotal)
@@ -187,7 +187,7 @@ function customApplyDamage(rSource, rTarget, bSecret, sDamage, nTotal)
 		local nTotalHP = DB.getValue(nodeTarget, "hp.total", 0)
 		local nWounds = DB.getValue(nodeTarget, "hp.wounds", 0)
 		if nTotalHP == nWounds then
-			bDead = true 
+			bDead = true
 		end
 		applyDamage(rSource, rTarget, bSecret, sDamage, nTotal)
 		nWounds = DB.getValue(nodeTarget, "hp.wounds", 0)
@@ -222,7 +222,7 @@ function customParseEffect(sPowerName, aWords)
 			else
 				bExhaustion = false
 			end
-			if bExhaustion == true and 
+			if bExhaustion == true and
 				StringManager.isWord(aWords[i+2], {"level", "levels"}) and
 				StringManager.isWord(aWords[i+3], "of") and
 				StringManager.isWord(aWords[i+4], "exhaustion") then
@@ -250,26 +250,26 @@ function onInit()
 
 	parseEffects = PowerManager.parseEffects
 	PowerManager.parseEffects = customParseEffect
-	
+
 	reduceExhaustion = CombatManager2.reduceExhaustion
 	CombatManager2.reduceExhaustion = customReduceExhaustion
 
 	table.insert(DataCommon.conditions, "exhaustion")
 	table.sort(DataCommon.conditions)
 
-	OptionsManager.registerOption2("VERBOSE_EXHAUSTION", false, "option_header_game", 
-	"option_Exhaustion_Verbose", "option_entry_cycler", 
+	OptionsManager.registerOption2("VERBOSE_EXHAUSTION", false, "option_header_game",
+	"option_Exhaustion_Verbose", "option_entry_cycler",
 	{ labels = "option_val_on", values = "on",
-		baselabel = "option_val_off", baseval = "off", default = "off" })  
-	OptionsManager.registerOption2("EXHAUSTION_HEAL", false, "option_header_houserule", 
-		"option_Exhaustion_Heal", "option_entry_cycler", 
-		{ 	
-			labels = "one|two|three|four|five|six", 
+		baselabel = "option_val_off", baseval = "off", default = "off" })
+	OptionsManager.registerOption2("EXHAUSTION_HEAL", false, "option_header_houserule",
+		"option_Exhaustion_Heal", "option_entry_cycler",
+		{
+			labels = "one|two|three|four|five|six",
 			values = "1|2|3|4|5|6",
-			baselabel = "option_val_off", 
-			baseval = "off", 
-			default = "off" 
-		})  
+			baselabel = "option_val_off",
+			baseval = "off",
+			default = "off"
+		})
 end
 
 function onClose()
