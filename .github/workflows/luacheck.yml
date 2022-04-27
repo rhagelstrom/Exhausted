@@ -127,5 +127,6 @@ jobs:
         with:
           files: '.'
           config: https://raw.githubusercontent.com/rhagelstrom/FG-luacheck/main/.luacheckrc
-          args: '--no-color --std +${{ needs.getnames.outputs.extension }}${{ needs.getnames.outputs.author }} --exclude-files .install/*'
+#          args: '--no-color --std +${{ needs.getnames.outputs.extension }}${{ needs.getnames.outputs.author }} --exclude-files .install/*'
+          args: '--no-color --std lua51 --exclude-files .install/*'
           annotate: 'warning'
