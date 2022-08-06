@@ -4,34 +4,31 @@ on:
     tags:
     - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
+name: Build FG-Usable File
 
-name: Create Release
+env:
+  EXTENSION: '.ext'
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-    - uses: actions/checkout@v1
-    - uses: ncipollo/release-action@v1
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-    - name: Archive Extension
-      uses: thedoctor0/zip-release@master
-      with:
-        filename: '.resources/Exhausted.ext'
-        exclusions: '*.git* *.github* *.resources* /*node_modules/* .editorconfig *.ext *.mod README.md *.yml *.pdf'
-    - name: Archive Release
-      uses: thedoctor0/zip-release@master
-      with:
-        path: '.resources/'
-        filename: '.resources/Exhausted.zip'
-    - name: Create Release
+    - name: Checkout Repo Assets
+      uses: actions/checkout@v3
+    - name: Create GitHub Release
       uses: ncipollo/release-action@v1
       with:
-        artifacts: ".resources/Exhausted.ext,.resources/Exhausted.zip"
+        token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Zip Assets Into .ext File
+      uses: thedoctor0/zip-release@master
+      with:
+        filename: ${{ github.event.repository.name }}${{ env.EXTENSION }}])
+        exclusions: '*.git* /*node_modules/* .editorconfig body.md *.psd *.xcf forge-thumbnail.png *.md *.pdf LICENSE *.DS_Store*'
+    - name: Add .ext File to Release
+      uses: ncipollo/release-action@v1
+      with:
+        artifacts: ${{ github.event.repository.name }}${{ env.EXTENSION }}])
         token: ${{ secrets.GITHUB_TOKEN }}
         allowUpdates: true
