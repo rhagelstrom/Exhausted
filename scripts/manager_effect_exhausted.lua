@@ -46,8 +46,8 @@ function onInit()
 	OptionsManager.registerOption2("EXHAUSTION_NPC", false, "option_Exhausted",
 	"option_Exhaustion_NPC", "option_entry_cycler",
 		{
-			labels = "All|Friend|Foe|Faction|Neutral",
-			values = "all|friend|foe|faction|neutral",
+			labels = "All|Friend|Foe|Neutral",
+			values = "all|friend|foe|neutral",
 			baselabel = "option_val_off",
 			baseval = "off",
 			default = "Off" }
@@ -113,7 +113,7 @@ function cleanExhaustionEffect(rNewEffect)
 			end
 		end
 		if rEffectComp.type:lower() == "exhaustion" then
-			if rEffectComp.mod == 0  then
+			if rEffectComp.mod == 0 then
 				rEffectComp.mod = 1
 			end
 			--must be caps to process correctly
@@ -158,12 +158,13 @@ end
 function sumExhaustion(nodeCT, nExhaustionLevel)
 	local bSummed = false
 	local nodeEffectsList = DB.getChildren(nodeCT, "effects")
+
 	for _, nodeEffect in pairs(nodeEffectsList) do
 		local sEffect = DB.getValue(nodeEffect, "label", "")
 		local aEffectComps = EffectManager.parseEffect(sEffect)
 		for i,sEffectComp in ipairs(aEffectComps) do
 			local rEffectComp = EffectManager.parseEffectCompSimple(sEffectComp)
-			if rEffectComp.type:lower() == "exhaustion"  then
+			if rEffectComp.type:upper() == "EXHAUSTION"  then
 				rEffectComp.mod = rEffectComp.mod + nExhaustionLevel
 				aEffectComps[i] = rEffectComp.type .. ": " .. tostring(rEffectComp.mod)
 				sEffect = EffectManager.rebuildParsedEffect(aEffectComps)
@@ -191,44 +192,46 @@ function exhaustionText(sEffect, nodeCT,  nLevel)
 	end
 	local rActor = ActorManager.resolveActor(nodeCT)
 	local sNodeType, nodeActor = ActorManager.getTypeAndNode(rActor)
-	local nSpeed = DB.getValue(nodeActor, "speed.base", 0)
-	local nHPMax = DB.getValue(nodeActor, "hp.base", 0)
-	local sDisCheck = "; DISCHK: strength; DISCHK: dexterity; DISCHK: constitution; DISCHK: intelligence; DISCHK: wisdom; DISCHK: charisma"
-	local sDisSave = "; DISATK; DISSAV: strength; DISSAV: dexterity; DISSAV: constitution; DISSAV: intelligence; DISSAV: wisdom; DISSAV: charisma"
-	local sSpeed = "; Speed-"
-	local sHPMax = "; MAXHP: -"
-	sEffect = sEffect:gsub(";?%s?Speed%-?%+?%d+;?", "")
-	sEffect = sEffect:gsub(";?%s?MAXHP%:%s?%-?%+?%d+;?", "")
-	sEffect = sEffect:gsub(";?%s?DISATK;%sDISSAV:%sstrength;%sDISSAV:%sdexterity;%sDISSAV:%sconstitution;%sDISSAV:%sintelligence;%sDISSAV:%swisdom;%sDISSAV:%scharisma;?", "")
+	if sNodeType == "pc" then
+		local nSpeed = DB.getValue(nodeActor, "speed.base", 0)
+		local nHPTotal = DB.getValue(nodeActor, "hp.total", 0)
+		local sDisCheck = "; DISCHK: strength; DISCHK: dexterity; DISCHK: constitution; DISCHK: intelligence; DISCHK: wisdom; DISCHK: charisma"
+		local sDisSave = "; DISATK; DISSAV: strength; DISSAV: dexterity; DISSAV: constitution; DISSAV: intelligence; DISSAV: wisdom; DISSAV: charisma"
+		local sSpeed = "; Speed-"
+		local sHPMax = "; MAXHP: -"
+		sEffect = sEffect:gsub(";?%s?Speed%-?%+?%d+;?", "")
+		sEffect = sEffect:gsub(";?%s?MAXHP%:%s?%-?%+?%d+;?", "")
+		sEffect = sEffect:gsub(";?%s?DISATK;%sDISSAV:%sstrength;%sDISSAV:%sdexterity;%sDISSAV:%sconstitution;%sDISSAV:%sintelligence;%sDISSAV:%swisdom;%sDISSAV:%scharisma;?", "")
 
-	if OptionsManager.isOption("VERBOSE_EXHAUSTION", "verbose") and not sEffect:match(sDisCheck) then
-		sEffect = sEffect .. sDisCheck
-	end
-	if (nLevel == 2) then
-		sEffect = sEffect .. sSpeed ..tostring(math.ceil(nSpeed / 2))
-	elseif (nLevel == 3) then
-		if OptionsManager.isOption("VERBOSE_EXHAUSTION", "verbose") then
-			sEffect = sEffect .. sDisSave
+		if OptionsManager.isOption("VERBOSE_EXHAUSTION", "verbose") and not sEffect:match(sDisCheck) then
+			sEffect = sEffect .. sDisCheck
 		end
-		sEffect = sEffect .. sSpeed ..tostring(math.ceil(nSpeed / 2))
-	elseif (nLevel == 4) then
-		if OptionsManager.isOption("VERBOSE_EXHAUSTION", "verbose") then
-			sEffect = sEffect .. sDisSave
+		if (nLevel == 2) then
+			sEffect = sEffect .. sSpeed ..tostring(math.ceil(nSpeed / 2))
+		elseif (nLevel == 3) then
+			if OptionsManager.isOption("VERBOSE_EXHAUSTION", "verbose") then
+				sEffect = sEffect .. sDisSave
+			end
+			sEffect = sEffect .. sSpeed ..tostring(math.ceil(nSpeed / 2))
+		elseif (nLevel == 4) then
+			if OptionsManager.isOption("VERBOSE_EXHAUSTION", "verbose") then
+				sEffect = sEffect .. sDisSave
+			end
+			sEffect = sEffect .. sHPMax ..tostring(math.ceil(nHPTotal / 2))
+			sEffect = sEffect .. sSpeed ..tostring(math.ceil(nSpeed / 2))
+		elseif (nLevel == 5) then
+			if OptionsManager.isOption("VERBOSE_EXHAUSTION", "verbose") then
+				sEffect = sEffect .. sDisSave
+			end
+			sEffect = sEffect .. sHPMax ..tostring(math.ceil(nHPTotal / 2))
+			sEffect = sEffect .. sSpeed .. tostring(nSpeed)
+		elseif (nLevel >= 6) then
+			if OptionsManager.isOption("VERBOSE_EXHAUSTION", "verbose") then
+				sEffect = sEffect .. sDisSave
+			end
+			sEffect = sEffect .. sHPMax ..tostring(nHPTotal)
+			sEffect = sEffect .. sSpeed .. tostring(nSpeed)
 		end
-		sEffect = sEffect .. sHPMax ..tostring(math.ceil(nHPMax / 2))
-		sEffect = sEffect .. sSpeed ..tostring(math.ceil(nSpeed / 2))
-	elseif (nLevel == 5) then
-		if OptionsManager.isOption("VERBOSE_EXHAUSTION", "verbose") then
-			sEffect = sEffect .. sDisSave
-		end
-		sEffect = sEffect .. sHPMax ..tostring(math.ceil(nHPMax / 2))
-		sEffect = sEffect .. sSpeed .. tostring(nSpeed)
-	elseif (nLevel >= 6) then
-		if OptionsManager.isOption("VERBOSE_EXHAUSTION", "verbose") then
-			sEffect = sEffect .. sDisSave
-		end
-		sEffect = sEffect .. sHPMax ..tostring(nHPMax)
-		sEffect = sEffect .. sSpeed .. tostring(nSpeed)
 	end
 	return sEffect
 end
@@ -250,8 +253,6 @@ function customApplyDamage(rSource, rTarget, rRoll)
 		elseif sTargetNodeType == "ct" or sTargetNodeType == "npc" then
 			local sFaction = ActorManager.getFaction(rTarget)
 			if OptionsManager.isOption("EXHAUSTION_NPC", "friend") and sFaction == "friend" then
-				bNPCReturn = false
-			elseif OptionsManager.isOption("EXHAUSTION_NPC", "faction") and (sFaction == "faction" or  sFaction == "") then
 				bNPCReturn = false
 			elseif OptionsManager.isOption("EXHAUSTION_NPC", "neutral") and sFaction == "neutral" then
 				bNPCReturn = false
@@ -275,12 +276,12 @@ function customApplyDamage(rSource, rTarget, rRoll)
 
 		applyDamage(rSource, rTarget, rRoll)
 
-		if sTargetNodeType ~= "pc" then
+		if sTargetNodeType == "pc" then
 			nWounds = DB.getValue(nodeTarget, "hp.wounds", 0)
 		elseif sTargetNodeType == "ct" or sTargetNodeType == "npc" then
 			nWounds = DB.getValue(nodeTarget, "wounds", 0)
 		end
-		if nTotalHP > nWounds and bDead == true then
+ 		if nTotalHP > nWounds and bDead == true then
 			local sExhaustion = "EXHAUSTION: " .. OptionsManager.getOption("EXHAUSTION_HEAL")
 			EffectManager.addEffect("", "", ActorManager.getCTNode(rTarget), { sName = sExhaustion, nDuration = 0 }, true)
 		end
