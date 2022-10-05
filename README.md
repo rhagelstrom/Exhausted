@@ -1,7 +1,7 @@
 # Exhausted
 
-**Current Version:** 1.8
-**Last Updated:** 09/17/22
+**Current Version:** 1.9
+**Last Updated:** 10/05/22
 
 5E extension for FantasyGrounds that adds exhaustion as a condition as well as immunities to the exhaustion condition
 
@@ -16,5 +16,6 @@ NPC Sheets and spells will automatically parse exhaustion as a condition with th
 | Name| Default | Options | Notes |
 |---|---|---|---|
 |Combat: Add Exhaustion if heal 0 HP| Off| Off,One,Two,Three,Four,Five,Six| Adds specified number of levels of exhaustion when healed from 0 HP|
-|Combat: Exhaustion NPC if heal 0 HP| Off| Off,All,Friend,Foe,Faction,Neutral| Adds level(s) of exhaustion to NPCs if healed from 0 HP|
+|Combat: Exhaustion NPC if heal 0 HP| Off| Off,All,Friend,Foe,Neutral| Adds level(s) of exhaustion to NPCs if healed from 0 HP|
 |CT: Verbose Exhaustion| Off| Off,MNM,Verbose|Adds extra text to support Mad Nomads Character Sheet Display Extension|
+|Playtest: Use One DnD exhausted rules| Off| Off,On|Use One DnD playtest rules for Exhaustion/Exhausted instead of 5E|

@@ -9,6 +9,15 @@ local applyDamage = nil
 local parseEffects = nil
 local reduceExhaustion = nil
 
+-- One DND
+local checkModRoll = nil
+local skillModRoll = nil
+local modAttack = nil
+local modSave = nil
+local getEffectsBonus = nil
+local onCastSave = nil
+local outputResult = nil
+
 function onInit()
 	rest = CombatManager2.rest
 	addEffect = EffectManager.addEffect
@@ -52,6 +61,27 @@ function onInit()
 			baseval = "off",
 			default = "Off" }
 		)
+	OptionsManager.registerOption2("ONE_DND_EXHAUSTION", false, "option_Exhausted",
+	"option_Exhaustion_One_DND", "option_entry_cycler",
+		{
+			labels = "On",
+			values = "on",
+			baselabel = "option_val_off",
+			baseval = "off",
+			default = "Off"
+		}
+	)
+	OptionsManager.registerCallback("ONE_DND_EXHAUSTION", oneDND)
+
+	-- One DND
+	checkModRoll = ActionCheck.modRoll
+	skillModRoll = ActionSkill.modRoll
+	modAttack = ActionAttack.modAttack
+	modSave = ActionSave.modSave
+	getEffectsBonus = EffectManager5E.getEffectsBonus
+	onCastSave = ActionPower.onCastSave
+	outputResult = ActionsManager.outputResult
+	oneDND()
 end
 
 function onClose()
@@ -60,6 +90,23 @@ function onClose()
 	ActionDamage.applyDamage = applyDamage
 	PowerManager.parseEffects = parseEffects
 	CombatManager2.reduceExhaustion = reduceExhaustion
+	OptionsManager.unregisterCallback("ONE_DND_EXHAUSTION", oneDND)
+	ActionCheck.modRoll = checkModRoll
+	ActionSkill.modRoll = skillModRoll
+	ActionAttack.modAttack = modAttack
+	ActionSave.modRoll = modSave
+	EffectManager5E.getEffectsBonus = getEffectsBonus
+	ActionPower.onCastSave = onCastSave
+	ActionsManager.outputResult = outputResult
+
+	ActionsManager.registerModHandler("check", ActionCheck.modRoll)
+	ActionsManager.registerModHandler("skill", ActionSkill.modRoll)
+	ActionsManager.registerModHandler("attack",ActionAttack.modAttack)
+	ActionsManager.registerModHandler("save", ActionSave.modRoll)
+	ActionsManager.registerModHandler("death", ActionSave.modRoll)
+	ActionsManager.registerModHandler("death_auto", ActionSave.modRoll)
+	ActionsManager.registerModHandler("concentration", ActionSave.modRoll)
+	ActionsManager.registerModHandler("systemshock", ActionSave.modRoll)
 end
 
 -- Disable SW code to reduce exhaustion on Rest
@@ -71,6 +118,12 @@ function customRest(bLong)
 		for _,nodeCT in pairs(CombatManager.getCombatantNodes()) do
 			if EffectManager5E.hasEffectCondition(nodeCT, "Exhaustion") then
 				exhaustionRest(nodeCT)
+			end
+		end
+	elseif not bLong and OptionsManager.isOption("ONE_DND_EXHAUSTION", "on") then
+		for _,nodeCT in pairs(CombatManager.getCombatantNodes()) do
+			if EffectManager5E.hasEffectCondition(nodeCT, "Exhaustion") then
+				tireless(nodeCT)
 			end
 		end
 	end
@@ -187,7 +240,7 @@ end
 --Add extra text and also comptibility with Mad Nomads Character Sheet Effects Display Extension
 --The real solution is for mad nomad support exhaustion in his code.
 function exhaustionText(sEffect, nodeCT,  nLevel)
-	if OptionsManager.isOption("VERBOSE_EXHAUSTION", "off") then
+	if OptionsManager.isOption("VERBOSE_EXHAUSTION", "off") or OptionsManager.isOption("ONE_DND_EXHAUSTION", "on") then
 		return sEffect
 	end
 	local rActor = ActorManager.resolveActor(nodeCT)
@@ -326,4 +379,138 @@ function customParseEffect(sPowerName, aWords)
 		i = i+1
 	end
 	return effects
+end
+
+--------------- One DND ------------------
+
+function oneDND()
+	if OptionsManager.isOption("ONE_DND_EXHAUSTION", "on") then
+		ActionCheck.modRoll = customCheckModRoll
+		ActionSkill.modRoll = customSkillModRoll
+		ActionAttack.modAttack = customModAttack
+		ActionSave.modRoll = customModSave
+		EffectManager5E.getEffectsBonus = customGetEffectsBonus
+		ActionPower.onCastSave = customOnCastSave
+		ActionsManager.outputResult = customOutputResult
+
+		ActionsManager.registerModHandler("check", customCheckModRoll)
+		ActionsManager.registerModHandler("skill", customSkillModRoll)
+		ActionsManager.registerModHandler("attack",customModAttack)
+		ActionsManager.registerModHandler("save", customModSave)
+		ActionsManager.registerModHandler("death", customModSave)
+		ActionsManager.registerModHandler("death_auto", customModSave)
+		ActionsManager.registerModHandler("concentration", customModSave)
+		ActionsManager.registerModHandler("systemshock", customModSave)
+	else
+		ActionCheck.modRoll = checkModRoll
+		ActionSkill.modRoll = skillModRoll
+		ActionAttack.modAttack = modAttack
+		ActionSave.modRoll = modSave
+		EffectManager5E.getEffectsBonus = getEffectsBonus
+		ActionPower.onCastSave = onCastSave
+		ActionsManager.outputResult = outputResult
+
+		ActionsManager.registerModHandler("check", checkModRoll)
+		ActionsManager.registerModHandler("skill", skillModRoll)
+		ActionsManager.registerModHandler("attack",modAttack)
+		ActionsManager.registerModHandler("save", modSave)
+		ActionsManager.registerModHandler("death", modSave)
+		ActionsManager.registerModHandler("death_auto", modSave)
+		ActionsManager.registerModHandler("concentration", modSave)
+		ActionsManager.registerModHandler("systemshock", modSave)
+
+	end
+
+end
+
+--Scrub out any EXHAUSTION queires here for One DND so 5E mods are not applied.
+function  customGetEffectsBonus(rActor, aEffectType, bAddEmptyBonus, aFilter, rFilterActor, bTargetedOnly)
+	if not rActor or not aEffectType then
+		return {}, 0
+	end
+	if type(aEffectType) ~= "table" then
+		aEffectType = { aEffectType };
+	end
+	for k, v in pairs(aEffectType) do
+		if v == "EXHAUSTION" then
+			table.remove(aEffectType,k)
+		end
+	end
+	return getEffectsBonus(rActor, aEffectType, bAddEmptyBonus, aFilter, rFilterActor, bTargetedOnly)
+end
+
+function oneDNDModExhaustion (rSource, rTarget, rRoll)
+	local nExhaustMod, nExhaustCount = getEffectsBonus(rSource, {"EXHAUSTION"}, true);
+	if nExhaustCount > 0 then
+		if nExhaustMod >= 1 then
+			rRoll.nMod = rRoll.nMod - nExhaustMod
+			rRoll.sDesc = rRoll.sDesc .. " [EXHAUSTED -" .. tostring(nExhaustMod) .. "]"
+		end
+	end
+end
+
+function customOutputResult(bSecret, rSource, rOrigin, msgLong, msgShort)
+	local sSubString = msgLong.text:match("%[vs%.%s*DC%s*%d+%]")
+	if sSubString then
+		local nExhaustMod, nExhaustCount = getEffectsBonus(rOrigin, {"EXHAUSTION"}, true);
+		if nExhaustCount > 0 and nExhaustMod >= 1 then
+				sSubString = sSubString:gsub("%[", "%%[")
+				local sModSubString = sSubString  .. "%[EXHAUSTED -" .. tostring(nExhaustMod) .. "]"
+				msgLong.text=  msgLong.text:gsub(sSubString, sModSubString)
+		end
+	end
+	outputResult(bSecret, rSource, rOrigin, msgLong, msgShort)
+end
+
+function customOnCastSave(rSource, rTarget, rRoll)
+	local nExhaustMod, nExhaustCount = getEffectsBonus(rSource, {"EXHAUSTION"}, true);
+	if nExhaustCount > 0 and nExhaustMod >= 1 then
+		rRoll.nMod = rRoll.nMod - nExhaustMod
+		local sSubString = rRoll.sDesc:match("%[%s*%a+%s*DC%s*%d+%]"):gsub("%[", "%%[")
+		local sDC = sSubString:match("(%d+)")
+		local sModSubString = sSubString:gsub(sDC, tostring(rRoll.nMod))
+		rRoll.sDesc = rRoll.sDesc:gsub(sSubString, sModSubString)
+		rRoll.sDesc = rRoll.sDesc .. " [EXHAUSTED -" .. tostring(nExhaustMod) .. "]"
+	end
+	return onCastSave(rSource, rTarget, rRoll)
+end
+
+function customCheckModRoll (rSource, rTarget, rRoll)
+	oneDNDModExhaustion(rSource, rTarget, rRoll)
+	return checkModRoll(rSource, rTarget, rRoll)
+end
+
+function customSkillModRoll (rSource, rTarget, rRoll)
+	oneDNDModExhaustion(rSource, rTarget, rRoll)
+	return skillModRoll(rSource, rTarget, rRoll)
+end
+
+function customModAttack(rSource, rTarget, rRoll)
+	oneDNDModExhaustion(rSource, rTarget, rRoll)
+	return modAttack(rSource, rTarget, rRoll)
+end
+
+function customModSave(rSource, rTarget, rRoll)
+	oneDNDModExhaustion(rSource, rTarget, rRoll)
+	return modSave(rSource, rTarget, rRoll)
+end
+
+function tireless(nodeCT)
+	local rActor = ActorManager.resolveActor(nodeCT)
+	local sNodeType, nodeActor = ActorManager.getTypeAndNode(rActor)
+	if sNodeType == "pc" then
+		for _,nodeClass in pairs(DB.getChildren(nodeActor, "classes")) do
+			local sClassName = StringManager.trim(DB.getValue(nodeClass, "name", "")):lower()
+			if sClassName:match("ranger") then
+				for _,nodeFeature in pairs(DB.getChildren(nodeActor, "featurelist")) do
+					local sFeatureName = StringManager.trim(DB.getValue(nodeFeature, "name", ""):lower())
+					if sFeatureName:match("tireless") then
+						exhaustionRest(nodeCT)
+						break
+					end
+				end
+				break
+			end
+		end
+	end
 end
