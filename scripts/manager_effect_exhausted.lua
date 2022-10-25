@@ -81,6 +81,9 @@ function onInit()
 	getEffectsBonus = EffectManager5E.getEffectsBonus
 	onCastSave = ActionPower.onCastSave
 	outputResult = ActionsManager.outputResult
+end
+
+function onTabletopInit()
 	oneDND()
 end
 
@@ -420,7 +423,6 @@ function oneDND()
 		ActionsManager.registerModHandler("systemshock", modSave)
 
 	end
-
 end
 
 --Scrub out any EXHAUSTION queires here for One DND so 5E mods are not applied.
