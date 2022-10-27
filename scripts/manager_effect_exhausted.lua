@@ -73,6 +73,9 @@ function onInit()
 	)
 	OptionsManager.registerCallback("ONE_DND_EXHAUSTION", oneDND)
 
+end
+
+function onTabletopInit()
 	-- One DND
 	checkModRoll = ActionCheck.modRoll
 	skillModRoll = ActionSkill.modRoll
@@ -81,9 +84,7 @@ function onInit()
 	getEffectsBonus = EffectManager5E.getEffectsBonus
 	onCastSave = ActionPower.onCastSave
 	outputResult = ActionsManager.outputResult
-end
 
-function onTabletopInit()
 	oneDND()
 end
 
@@ -97,7 +98,7 @@ function onClose()
 	ActionCheck.modRoll = checkModRoll
 	ActionSkill.modRoll = skillModRoll
 	ActionAttack.modAttack = modAttack
-	ActionSave.modRoll = modSave
+	ActionSave.modSave = modSave
 	EffectManager5E.getEffectsBonus = getEffectsBonus
 	ActionPower.onCastSave = onCastSave
 	ActionsManager.outputResult = outputResult
@@ -105,11 +106,11 @@ function onClose()
 	ActionsManager.registerModHandler("check", ActionCheck.modRoll)
 	ActionsManager.registerModHandler("skill", ActionSkill.modRoll)
 	ActionsManager.registerModHandler("attack",ActionAttack.modAttack)
-	ActionsManager.registerModHandler("save", ActionSave.modRoll)
-	ActionsManager.registerModHandler("death", ActionSave.modRoll)
-	ActionsManager.registerModHandler("death_auto", ActionSave.modRoll)
-	ActionsManager.registerModHandler("concentration", ActionSave.modRoll)
-	ActionsManager.registerModHandler("systemshock", ActionSave.modRoll)
+	ActionsManager.registerModHandler("save", ActionSave.modSave)
+	ActionsManager.registerModHandler("death", ActionSave.modSave)
+	ActionsManager.registerModHandler("death_auto", ActionSave.modSave)
+	ActionsManager.registerModHandler("concentration", ActionSave.modSave)
+	ActionsManager.registerModHandler("systemshock", ActionSave.modSave)
 end
 
 -- Disable SW code to reduce exhaustion on Rest
@@ -391,7 +392,7 @@ function oneDND()
 		ActionCheck.modRoll = customCheckModRoll
 		ActionSkill.modRoll = customSkillModRoll
 		ActionAttack.modAttack = customModAttack
-		ActionSave.modRoll = customModSave
+		ActionSave.modSave = customModSave
 		EffectManager5E.getEffectsBonus = customGetEffectsBonus
 		ActionPower.onCastSave = customOnCastSave
 		ActionsManager.outputResult = customOutputResult
@@ -408,7 +409,7 @@ function oneDND()
 		ActionCheck.modRoll = checkModRoll
 		ActionSkill.modRoll = skillModRoll
 		ActionAttack.modAttack = modAttack
-		ActionSave.modRoll = modSave
+		ActionSave.modSave = modSave
 		EffectManager5E.getEffectsBonus = getEffectsBonus
 		ActionPower.onCastSave = onCastSave
 		ActionsManager.outputResult = outputResult
