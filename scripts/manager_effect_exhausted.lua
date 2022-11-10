@@ -244,7 +244,7 @@ end
 --Add extra text and also comptibility with Mad Nomads Character Sheet Effects Display Extension
 --The real solution is for mad nomad support exhaustion in his code.
 function exhaustionText(sEffect, nodeCT,  nLevel)
-	if OptionsManager.isOption("VERBOSE_EXHAUSTION", "off") or OptionsManager.isOption("ONE_DND_EXHAUSTION", "on") then
+	if OptionsManager.isOption("VERBOSE_EXHAUSTION", "off") or OptionsManager.isOption("VERBOSE_EXHAUSTION", "Off") or OptionsManager.isOption("ONE_DND_EXHAUSTION", "on") then
 		return sEffect
 	end
 	local rActor = ActorManager.resolveActor(nodeCT)
@@ -294,13 +294,13 @@ function exhaustionText(sEffect, nodeCT,  nLevel)
 end
 
 function customApplyDamage(rSource, rTarget, rRoll)
-	if not OptionsManager.isOption("EXHAUSTION_HEAL", "off") then
+	if not (OptionsManager.isOption("EXHAUSTION_HEAL", "off")  or OptionsManager.isOption("EXHAUSTION_HEAL", "Off")) then
 		local bDead = false
 		local nTotalHP
 		local nWounds
 		local bNPCReturn = true
 		local sTargetNodeType, nodeTarget = ActorManager.getTypeAndNode(rTarget)
-		if not nodeTarget then
+		if not nodeTarget or not rRoll or rRoll.sType ~= "heal"  then
 			return applyDamage(rSource, rTarget, rRoll)
 		end
 
