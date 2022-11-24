@@ -12,6 +12,7 @@ local reduceExhaustion = nil
 -- One DND
 local checkModRoll = nil
 local skillModRoll = nil
+local initModRoll = nil
 local modAttack = nil
 local modSave = nil
 local getEffectsBonus = nil
@@ -84,6 +85,7 @@ function onTabletopInit()
 	getEffectsBonus = EffectManager5E.getEffectsBonus
 	onCastSave = ActionPower.onCastSave
 	outputResult = ActionsManager.outputResult
+	initModRoll = ActionInit.modRoll
 
 	oneDND()
 end
@@ -102,6 +104,7 @@ function onClose()
 	EffectManager5E.getEffectsBonus = getEffectsBonus
 	ActionPower.onCastSave = onCastSave
 	ActionsManager.outputResult = outputResult
+	ActionInit.modRoll = initModRoll
 
 	ActionsManager.registerModHandler("check", ActionCheck.modRoll)
 	ActionsManager.registerModHandler("skill", ActionSkill.modRoll)
@@ -111,6 +114,7 @@ function onClose()
 	ActionsManager.registerModHandler("death_auto", ActionSave.modSave)
 	ActionsManager.registerModHandler("concentration", ActionSave.modSave)
 	ActionsManager.registerModHandler("systemshock", ActionSave.modSave)
+	ActionsManager.registerModHandler("init", ActionInit.modRoll)
 end
 
 -- Disable SW code to reduce exhaustion on Rest
@@ -396,6 +400,7 @@ function oneDND()
 		EffectManager5E.getEffectsBonus = customGetEffectsBonus
 		ActionPower.onCastSave = customOnCastSave
 		ActionsManager.outputResult = customOutputResult
+		ActionInit.modRoll = customModInit
 
 		ActionsManager.registerModHandler("check", customCheckModRoll)
 		ActionsManager.registerModHandler("skill", customSkillModRoll)
@@ -405,6 +410,7 @@ function oneDND()
 		ActionsManager.registerModHandler("death_auto", customModSave)
 		ActionsManager.registerModHandler("concentration", customModSave)
 		ActionsManager.registerModHandler("systemshock", customModSave)
+		ActionsManager.registerModHandler("init", customModInit)
 	else
 		ActionCheck.modRoll = checkModRoll
 		ActionSkill.modRoll = skillModRoll
@@ -413,6 +419,7 @@ function oneDND()
 		EffectManager5E.getEffectsBonus = getEffectsBonus
 		ActionPower.onCastSave = onCastSave
 		ActionsManager.outputResult = outputResult
+		ActionInit.modRoll = initModRoll
 
 		ActionsManager.registerModHandler("check", checkModRoll)
 		ActionsManager.registerModHandler("skill", skillModRoll)
@@ -422,6 +429,7 @@ function oneDND()
 		ActionsManager.registerModHandler("death_auto", modSave)
 		ActionsManager.registerModHandler("concentration", modSave)
 		ActionsManager.registerModHandler("systemshock", modSave)
+		ActionsManager.registerModHandler("init", initModRoll)
 
 	end
 end
@@ -496,6 +504,11 @@ end
 function customModSave(rSource, rTarget, rRoll)
 	oneDNDModExhaustion(rSource, rTarget, rRoll)
 	return modSave(rSource, rTarget, rRoll)
+end
+
+function customModInit(rSource, rTarget, rRoll)
+	oneDNDModExhaustion(rSource, rTarget, rRoll)
+	return initModRoll(rSource, rTarget, rRoll)
 end
 
 function tireless(nodeCT)
