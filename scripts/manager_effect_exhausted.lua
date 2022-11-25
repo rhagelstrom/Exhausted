@@ -20,13 +20,13 @@ local onCastSave = nil
 local outputResult = nil
 
 function onInit()
-	rest = CombatManager2.rest
+	rest = CharManager.rest
 	addEffect = EffectManager.addEffect
 	applyDamage = ActionDamage.applyDamage
 	parseEffects = PowerManager.parseEffects
 	reduceExhaustion = CombatManager2.reduceExhaustion
 
-	CombatManager2.rest = customRest
+	CharManager.rest = customRest
 	EffectManager.addEffect = customAddEffect
 	ActionDamage.applyDamage = customApplyDamage
 	PowerManager.parseEffects = customParseEffect
@@ -92,7 +92,7 @@ end
 
 function onClose()
 	EffectManager.addEffect = addEffect
-	CombatManager2.rest = rest
+	CharManager.rest = rest
 	ActionDamage.applyDamage = applyDamage
 	PowerManager.parseEffects = parseEffects
 	CombatManager2.reduceExhaustion = reduceExhaustion
@@ -117,107 +117,29 @@ function onClose()
 	ActionsManager.registerModHandler("init", ActionInit.modRoll)
 end
 
--- Disable SW code to reduce exhaustion on Rest
-function customReduceExhaustion()
-end
-
-function customRest(bLong)
-	if bLong then
-		for _,nodeCT in pairs(CombatManager.getCombatantNodes()) do
-			if EffectManager5E.hasEffectCondition(nodeCT, "Exhaustion") then
-				exhaustionRest(nodeCT)
-			end
-		end
-	elseif not bLong and OptionsManager.isOption("ONE_DND_EXHAUSTION", "on") then
-		for _,nodeCT in pairs(CombatManager.getCombatantNodes()) do
-			if EffectManager5E.hasEffectCondition(nodeCT, "Exhaustion") then
-				tireless(nodeCT)
-			end
-		end
-	end
-	rest(bLong)
-end
-
-function exhaustionRest(nodeCT)
-	for _,nodeEffect in pairs(DB.getChildren(nodeCT, "effects")) do
-		local sEffect = DB.getValue(nodeEffect, "label", "")
-		local aEffectComps = EffectManager.parseEffect(sEffect)
-
-		for i,sEffectComp in ipairs(aEffectComps) do
-			local rEffectComp = EffectManager.parseEffectCompSimple(sEffectComp)
-			if rEffectComp.type:lower() == "exhaustion" then
-				rEffectComp.mod  = rEffectComp.mod - 1
-				if  rEffectComp.mod >= 1 then
-					aEffectComps[i] = rEffectComp.type .. ": " .. tostring(rEffectComp.mod)
-					sEffect = EffectManager.rebuildParsedEffect(aEffectComps)
-					sEffect = exhaustionText(sEffect, nodeCT, rEffectComp.mod)
-					updateEffect(nodeCT, nodeEffect, sEffect)
-				else
-					EffectManager.expireEffect(nodeCT, nodeEffect, 0)
-				end
-			end
-		end
-	end
-end
 
 function cleanExhaustionEffect(rNewEffect)
 	local nExhaustionLevel = 0
-	local bHasLabel = false
-	local bExhaustion = false
 	local aEffectComps = EffectManager.parseEffect(rNewEffect.sName)
 	for i,sEffectComp in ipairs(aEffectComps) do
 		local rEffectComp = EffectManager.parseEffectCompSimple(sEffectComp)
-		if sEffectComp:lower() == "exhaustion"  then
-			bHasLabel = true
-			if not bExhaustion then
-				nExhaustionLevel = 1
-			end
-		end
-		if rEffectComp.type:lower() == "exhaustion" then
+		if rEffectComp.type:lower() == "exhaustion"  or rEffectComp.original:lower() == "exhaustion" then
 			if rEffectComp.mod == 0 then
 				rEffectComp.mod = 1
+				sEffectComp = sEffectComp .. ": 1"
 			end
-			--must be caps to process correctly
 			aEffectComps[i] = sEffectComp:upper()
-			bExhaustion = true
 			nExhaustionLevel = rEffectComp.mod
 		end
 	end
-	-- We need an exhaustion label because EffectManager5E.hasEffectCondition doesn't process variable mods
-	if not bHasLabel and bExhaustion then
-		table.insert(aEffectComps, 1, "Exhaustion")
-	elseif bHasLabel and not bExhaustion then
-		table.insert(aEffectComps, "EXHAUSTION: 1")
-	end
-
 	rNewEffect.sName = EffectManager.rebuildParsedEffect(aEffectComps)
 	return nExhaustionLevel
 end
 
-function customAddEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg)
-	if not nodeCT or not rNewEffect or not rNewEffect.sName then
-		return addEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg)
-	end
-
-	local nExhaustionLevel = cleanExhaustionEffect(rNewEffect)
-	if nExhaustionLevel > 0  then
-		local aCancelled = EffectManager5E.checkImmunities(nil, nodeCT, rNewEffect)
-		if #aCancelled > 0 then
-			local sMessage = string.format("%s ['%s'] -> [%s]", Interface.getString("effect_label"), rNewEffect.sName, Interface.getString("effect_status_targetimmune"))
-			EffectManager.message(sMessage, nodeCT, false, sUser);
-			return
-		end
-		if  EffectManager5E.hasEffectCondition(nodeCT, "exhaustion") and sumExhaustion(nodeCT, nExhaustionLevel) then
-			return
-		else
-			rNewEffect.sName = exhaustionText(rNewEffect.sName, nodeCT, nExhaustionLevel)
-		end
-	end
-	addEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg)
-end
-
-function sumExhaustion(nodeCT, nExhaustionLevel)
-	local bSummed = false
+-- Return return the sum total else return nil
+function sumExhaustion(rActor, nExhaustionLevel)
+	local nSummed = nil
+	local nodeCT = ActorManager.getCTNode(rActor)
 	local nodeEffectsList = DB.getChildren(nodeCT, "effects")
 
 	for _, nodeEffect in pairs(nodeEffectsList) do
@@ -229,13 +151,13 @@ function sumExhaustion(nodeCT, nExhaustionLevel)
 				rEffectComp.mod = rEffectComp.mod + nExhaustionLevel
 				aEffectComps[i] = rEffectComp.type .. ": " .. tostring(rEffectComp.mod)
 				sEffect = EffectManager.rebuildParsedEffect(aEffectComps)
-				sEffect = exhaustionText(sEffect, nodeCT, rEffectComp.mod)
+				sEffect = exhaustionText(sEffect, rActor, rEffectComp.mod)
 				updateEffect(nodeCT, nodeEffect, sEffect)
-				bSummed = true
+				nSummed = rEffectComp.mod
 			end
 		end
 	end
-	return bSummed
+	return nSummed
 end
 
 function updateEffect(nodeActor, nodeEffect, sLabel)
@@ -247,11 +169,10 @@ end
 
 --Add extra text and also comptibility with Mad Nomads Character Sheet Effects Display Extension
 --The real solution is for mad nomad support exhaustion in his code.
-function exhaustionText(sEffect, nodeCT,  nLevel)
+function exhaustionText(sEffect, rActor,  nLevel)
 	if OptionsManager.isOption("VERBOSE_EXHAUSTION", "off") or OptionsManager.isOption("VERBOSE_EXHAUSTION", "Off") or OptionsManager.isOption("ONE_DND_EXHAUSTION", "on") then
 		return sEffect
 	end
-	local rActor = ActorManager.resolveActor(nodeCT)
 	local sNodeType, nodeActor = ActorManager.getTypeAndNode(rActor)
 	if sNodeType == "pc" then
 		local nSpeed = DB.getValue(nodeActor, "speed.base", 0)
@@ -295,6 +216,72 @@ function exhaustionText(sEffect, nodeCT,  nLevel)
 		end
 	end
 	return sEffect
+end
+
+-- Replace SW code to reduce exhaustion on Rest
+function customReduceExhaustion(nodeCT)
+	local rActor = ActorManager.resolveActor(nodeCT)
+	-- Check conditionals
+	local aEffectsByType = EffectManager5E.getEffectsByType(rActor, "EXHAUSTION")
+	if aEffectsByType and next(aEffectsByType) then
+		for _,nodeEffect in pairs(DB.getChildren(nodeCT, "effects")) do
+			local sEffect = DB.getValue(nodeEffect, "label", "")
+			local aEffectComps = EffectManager.parseEffect(sEffect)
+
+			for i,sEffectComp in ipairs(aEffectComps) do
+				local rEffectComp = EffectManager.parseEffectCompSimple(sEffectComp)
+				if rEffectComp.type:lower() == "exhaustion" then
+					rEffectComp.mod  = rEffectComp.mod - 1
+					if  rEffectComp.mod >= 1 then
+						aEffectComps[i] = rEffectComp.type .. ": " .. tostring(rEffectComp.mod)
+						sEffect = EffectManager.rebuildParsedEffect(aEffectComps)
+						sEffect = exhaustionText(sEffect, rActor, rEffectComp.mod)
+						updateEffect(nodeCT, nodeEffect, sEffect)
+					else
+						EffectManager.expireEffect(nodeCT, nodeEffect, 0)
+					end
+				end
+			end
+		end
+	end
+end
+
+function customRest(nodeChar, bLong)
+	local nodeCT = ActorManager.getCTNode(nodeChar)
+	local rActor = ActorManager.resolveActor(nodeCT)
+	if  not bLong and OptionsManager.isOption("ONE_DND_EXHAUSTION", "on") then
+		local aEffectsByType = EffectManager5E.getEffectsByType(rActor, "EXHAUSTION")
+		if aEffectsByType and next(aEffectsByType) then
+				tireless(nodeCT)
+		end
+	end
+	rest(nodeChar,bLong)
+end
+
+function customAddEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg)
+	if not nodeCT or not rNewEffect or not rNewEffect.sName then
+		return addEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg)
+	end
+	local nExhausted = nil
+	local nExhaustionLevel = cleanExhaustionEffect(rNewEffect)
+	if nExhaustionLevel > 0  then
+		local rActor = ActorManager.resolveActor(nodeCT)
+		local aCancelled = EffectManager5E.checkImmunities(nil, rActor, rNewEffect)
+		if #aCancelled > 0 then
+			local sMessage = string.format("%s ['%s'] -> [%s]", Interface.getString("effect_label"), rNewEffect.sName, Interface.getString("effect_status_targetimmune"))
+			EffectManager.message(sMessage, nodeCT, false, sUser);
+			return
+		end
+
+		nExhausted = sumExhaustion(rActor, nExhaustionLevel)
+		if nExhausted then
+			nExhaustionLevel = nExhausted
+		end
+		rNewEffect.sName = exhaustionText(rNewEffect.sName, rActor, nExhaustionLevel)
+	end
+	if not nExhausted then
+		addEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg)
+	end
 end
 
 function customApplyDamage(rSource, rTarget, rRoll)
@@ -521,7 +508,7 @@ function tireless(nodeCT)
 				for _,nodeFeature in pairs(DB.getChildren(nodeActor, "featurelist")) do
 					local sFeatureName = StringManager.trim(DB.getValue(nodeFeature, "name", ""):lower())
 					if sFeatureName:match("tireless") then
-						exhaustionRest(nodeCT)
+						customReduceExhaustion(nodeCT)
 						break
 					end
 				end
