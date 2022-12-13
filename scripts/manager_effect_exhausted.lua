@@ -221,24 +221,26 @@ end
 -- Replace SW code to reduce exhaustion on Rest
 function customReduceExhaustion(nodeCT)
 	local rActor = ActorManager.resolveActor(nodeCT)
-	-- Check conditionals
-	local aEffectsByType = EffectManager5E.getEffectsByType(rActor, "EXHAUSTION")
-	if aEffectsByType and next(aEffectsByType) then
-		for _,nodeEffect in pairs(DB.getChildren(nodeCT, "effects")) do
-			local sEffect = DB.getValue(nodeEffect, "label", "")
-			local aEffectComps = EffectManager.parseEffect(sEffect)
+	if not EffectManager.hasCondition(rActor, "STAYEXHAUST") then
+		-- Check conditionals
+		local aEffectsByType = EffectManager5E.getEffectsByType(rActor, "EXHAUSTION")
+		if aEffectsByType and next(aEffectsByType) then
+			for _,nodeEffect in pairs(DB.getChildren(nodeCT, "effects")) do
+				local sEffect = DB.getValue(nodeEffect, "label", "")
+				local aEffectComps = EffectManager.parseEffect(sEffect)
 
-			for i,sEffectComp in ipairs(aEffectComps) do
-				local rEffectComp = EffectManager.parseEffectCompSimple(sEffectComp)
-				if rEffectComp.type:lower() == "exhaustion" then
-					rEffectComp.mod  = rEffectComp.mod - 1
-					if  rEffectComp.mod >= 1 then
-						aEffectComps[i] = rEffectComp.type .. ": " .. tostring(rEffectComp.mod)
-						sEffect = EffectManager.rebuildParsedEffect(aEffectComps)
-						sEffect = exhaustionText(sEffect, rActor, rEffectComp.mod)
-						updateEffect(nodeCT, nodeEffect, sEffect)
-					else
-						EffectManager.expireEffect(nodeCT, nodeEffect, 0)
+				for i,sEffectComp in ipairs(aEffectComps) do
+					local rEffectComp = EffectManager.parseEffectCompSimple(sEffectComp)
+					if rEffectComp.type:lower() == "exhaustion" then
+						rEffectComp.mod  = rEffectComp.mod - 1
+						if  rEffectComp.mod >= 1 then
+							aEffectComps[i] = rEffectComp.type .. ": " .. tostring(rEffectComp.mod)
+							sEffect = EffectManager.rebuildParsedEffect(aEffectComps)
+							sEffect = exhaustionText(sEffect, rActor, rEffectComp.mod)
+							updateEffect(nodeCT, nodeEffect, sEffect)
+						else
+							EffectManager.expireEffect(nodeCT, nodeEffect, 0)
+						end
 					end
 				end
 			end
