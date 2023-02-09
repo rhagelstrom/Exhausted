@@ -4,7 +4,7 @@ on:
     tags:
     - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 
-name: Build FG-Usable File
+name: Build FG Extension
 
 env:
   EXTENSION: '.ext'
@@ -25,7 +25,7 @@ jobs:
       uses: thedoctor0/zip-release@master
       with:
         filename: ${{ github.event.repository.name }}${{ env.EXTENSION }}])
-        exclusions: '*.git* /*node_modules/* .editorconfig body.md *.psd *.xcf forge-thumbnail.png *.md *.pdf LICENSE *.DS_Store*'
+        exclusions: '*.git* /*node_modules/* .editorconfig body.md *.psd *.xcf forge-thumbnail.png *.md *.pdf LICENSE *.DS_Store* *.json *.yml'
     - name: Add .ext File to Release
       uses: ncipollo/release-action@v1
       with:

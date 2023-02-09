@@ -1,5 +1,5 @@
 --  	Author: Ryan Hagelstrom
---	  	Copyright © 2021-2022
+--	  	Copyright © 2021-2023
 --	  	This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
 --	  	https://creativecommons.org/licenses/by-sa/4.0/
 local rest = nil;
@@ -96,6 +96,7 @@ function onClose()
     ActionsManager.registerModHandler('init', ActionInit.modRoll);
 end
 
+-- luacheck: globals cleanExhaustionEffect
 function cleanExhaustionEffect(rNewEffect)
     local nExhaustionLevel = 0;
     local aEffectComps = EffectManager.parseEffect(rNewEffect.sName);
@@ -115,6 +116,7 @@ function cleanExhaustionEffect(rNewEffect)
 end
 
 -- Return return the sum total else return nil
+-- luacheck: globals sumExhaustion
 function sumExhaustion(rActor, nExhaustionLevel)
     local nSummed = nil;
     local nodeCT = ActorManager.getCTNode(rActor);
@@ -138,6 +140,7 @@ function sumExhaustion(rActor, nExhaustionLevel)
     return nSummed;
 end
 
+-- luacheck: globals updateEffect
 function updateEffect(nodeActor, nodeEffect, sLabel)
     DB.setValue(nodeEffect, 'label', 'string', sLabel);
     local bGMOnly = EffectManager.isGMEffect(nodeActor, nodeEffect);
@@ -147,6 +150,7 @@ end
 
 -- Add extra text and also comptibility with Mad Nomads Character Sheet Effects Display Extension
 -- The real solution is for mad nomad support exhaustion in his code.
+-- luacheck: globals exhaustionText
 function exhaustionText(sEffect, rActor, nLevel)
     if OptionsManager.isOption('VERBOSE_EXHAUSTION', 'off') or OptionsManager.isOption('VERBOSE_EXHAUSTION', 'Off') or
         OptionsManager.isOption('ONE_DND_EXHAUSTION', 'on') then
@@ -200,6 +204,7 @@ function exhaustionText(sEffect, rActor, nLevel)
 end
 
 -- Replace SW code to reduce exhaustion on Rest
+-- luacheck: globals customReduceExhaustion
 function customReduceExhaustion(nodeCT)
     local rActor = ActorManager.resolveActor(nodeCT);
     if not EffectManager.hasCondition(rActor, 'STAYEXHAUST') then
@@ -218,7 +223,7 @@ function customReduceExhaustion(nodeCT)
                             aEffectComps[i] = rEffectComp.type .. ': ' .. tostring(rEffectComp.mod);
                             sEffect = EffectManager.rebuildParsedEffect(aEffectComps);
                             sEffect = EffectsManagerExhausted.exhaustionText(sEffect, rActor, rEffectComp.mod);
-                            EffectsManagerExhausted. updateEffect(nodeCT, nodeEffect, sEffect);
+                            EffectsManagerExhausted.updateEffect(nodeCT, nodeEffect, sEffect);
                         else
                             EffectManager.expireEffect(nodeCT, nodeEffect, 0);
                         end
@@ -228,7 +233,7 @@ function customReduceExhaustion(nodeCT)
         end
     end
 end
-
+-- luacheck: globals customRest
 function customRest(nodeChar, bLong)
     local nodeCT = ActorManager.getCTNode(nodeChar);
     local rActor = ActorManager.resolveActor(nodeCT);
@@ -241,12 +246,13 @@ function customRest(nodeChar, bLong)
     rest(nodeChar, bLong);
 end
 
+-- luacheck: globals customAddEffect
 function customAddEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg)
     if not nodeCT or not rNewEffect or not rNewEffect.sName then
         return addEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg);
     end
     local nExhausted = nil;
-    local nExhaustionLevel =  EffectsManagerExhausted.cleanExhaustionEffect(rNewEffect);
+    local nExhaustionLevel = EffectsManagerExhausted.cleanExhaustionEffect(rNewEffect);
     if nExhaustionLevel > 0 then
         local rActor = ActorManager.resolveActor(nodeCT);
         local aCancelled = EffectManager5E.checkImmunities(nil, rActor, rNewEffect);
@@ -257,7 +263,7 @@ function customAddEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg)
             return
         end
 
-        nExhausted =  EffectsManagerExhausted.sumExhaustion(rActor, nExhaustionLevel);
+        nExhausted = EffectsManagerExhausted.sumExhaustion(rActor, nExhaustionLevel);
         if nExhausted then
             nExhaustionLevel = nExhausted;
         end
@@ -268,6 +274,7 @@ function customAddEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg)
     end
 end
 
+-- luacheck: globals customApplyDamage
 function customApplyDamage(rSource, rTarget, rRoll)
     if not (OptionsManager.isOption('EXHAUSTION_HEAL', 'off') or OptionsManager.isOption('EXHAUSTION_HEAL', 'Off')) then
         local bDead = false;
@@ -322,6 +329,7 @@ function customApplyDamage(rSource, rTarget, rRoll)
     end
 end
 
+-- luacheck: globals customParseEffect
 function customParseEffect(sPowerName, aWords)
     local effects = parseEffects(sPowerName, aWords);
     local i = 1;
@@ -359,7 +367,7 @@ function customParseEffect(sPowerName, aWords)
 end
 
 --------------- One DND ------------------
-
+-- luacheck: globals oneDND
 function oneDND()
     if OptionsManager.isOption('ONE_DND_EXHAUSTION', 'on') then
         ActionCheck.modRoll = customCheckModRoll;
@@ -403,6 +411,7 @@ function oneDND()
 end
 
 -- Scrub out any EXHAUSTION queires here for One DND so 5E mods are not applied.
+-- luacheck: globals customGetEffectsBonus
 function customGetEffectsBonus(rActor, aEffectType, bAddEmptyBonus, aFilter, rFilterActor, bTargetedOnly)
     if not rActor or not aEffectType then
         return {}, 0;
@@ -418,7 +427,8 @@ function customGetEffectsBonus(rActor, aEffectType, bAddEmptyBonus, aFilter, rFi
     return getEffectsBonus(rActor, aEffectType, bAddEmptyBonus, aFilter, rFilterActor, bTargetedOnly);
 end
 
-function oneDNDModExhaustion(rSource, rTarget, rRoll)
+-- luacheck: globals oneDNDModExhaustion
+function oneDNDModExhaustion(rSource, _, rRoll)
     local nExhaustMod, nExhaustCount = getEffectsBonus(rSource, {'EXHAUSTION'}, true);
     if nExhaustCount > 0 then
         if nExhaustMod >= 1 then
@@ -428,6 +438,7 @@ function oneDNDModExhaustion(rSource, rTarget, rRoll)
     end
 end
 
+-- luacheck: globals customOutputResult
 function customOutputResult(bSecret, rSource, rOrigin, msgLong, msgShort)
     local sSubString = msgLong.text:match('%[vs%.%s*DC%s*%d+%]');
     if sSubString then
@@ -441,6 +452,7 @@ function customOutputResult(bSecret, rSource, rOrigin, msgLong, msgShort)
     outputResult(bSecret, rSource, rOrigin, msgLong, msgShort);
 end
 
+-- luacheck: globals customOnCastSave
 function customOnCastSave(rSource, rTarget, rRoll)
     local nExhaustMod, nExhaustCount = getEffectsBonus(rSource, {'EXHAUSTION'}, true);
     if nExhaustCount > 0 and nExhaustMod >= 1 then
@@ -454,31 +466,37 @@ function customOnCastSave(rSource, rTarget, rRoll)
     return onCastSave(rSource, rTarget, rRoll);
 end
 
+-- luacheck: globals customCheckModRoll
 function customCheckModRoll(rSource, rTarget, rRoll)
     EffectsManagerExhausted.oneDNDModExhaustion(rSource, rTarget, rRoll);
     return checkModRoll(rSource, rTarget, rRoll);
 end
 
+-- luacheck: globals customSkillModRoll
 function customSkillModRoll(rSource, rTarget, rRoll)
     EffectsManagerExhausted.oneDNDModExhaustion(rSource, rTarget, rRoll);
     return skillModRoll(rSource, rTarget, rRoll);
 end
 
+-- luacheck: globals customModAttack
 function customModAttack(rSource, rTarget, rRoll)
     EffectsManagerExhausted.oneDNDModExhaustion(rSource, rTarget, rRoll);
     return modAttack(rSource, rTarget, rRoll);
 end
 
+-- luacheck: globals customModSave
 function customModSave(rSource, rTarget, rRoll)
     EffectsManagerExhausted.oneDNDModExhaustion(rSource, rTarget, rRoll);
     return modSave(rSource, rTarget, rRoll);
 end
 
+-- luacheck: globals customModInit
 function customModInit(rSource, rTarget, rRoll)
     EffectsManagerExhausted.oneDNDModExhaustion(rSource, rTarget, rRoll);
     return initModRoll(rSource, rTarget, rRoll);
 end
 
+-- luacheck: globals tireless
 function tireless(nodeCT)
     local rActor = ActorManager.resolveActor(nodeCT)
     local sNodeType, nodeActor = ActorManager.getTypeAndNode(rActor);

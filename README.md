@@ -1,12 +1,12 @@
+[![Build FG Extension](https://github.com/rhagelstrom/Exhausted/actions/workflows/create-release.yml/badge.svg)](https://github.com/rhagelstrom/Exhausted/actions/workflows/create-release.yml) [![Luacheckrc](https://github.com/rhagelstrom/Exhausted/actions/workflows/luacheck.yml/badge.svg)](https://github.com/rhagelstrom/Exhausted/actions/workflows/luacheck.yml)
 # Exhausted
 
 **Current Version:** 1.15
-**Last Updated:** 02/09/23
+**Last Updated:** 02/11/23
 
 5E extension for FantasyGrounds that adds exhaustion as a condition as well as immunities to the exhaustion condition.
 
 This extension also automates the exhaustion stack by summing exhaustion levels when applied and decrementing them on long rest. The effect **STAYEXHAUST** can be used to prevent exhaustion level from being decremented on rest. Also support for Mad Nomads Character Sheet Effects Display extension.
-
 
 NPC Sheets and spells will automatically parse exhaustion as a condition with the text "target is exhaustion" or "gain(s)/suffer(s) (N) level(s) of exhaustion".
 
