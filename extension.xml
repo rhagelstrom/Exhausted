@@ -1,19 +1,32 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <root release="3.0" version="3">
-	<announcement text="5E - Exhausted v1.14\rby Ryan Hagelstrom 2021-2022" font="emotefont" icon="Exhausted"/>
+	<announcement text="5E - Exhausted v1.15\rby Ryan Hagelstrom 2021-2023" font="emotefont" icon="Exhausted" />
 	<properties>
-    	<loadorder>120</loadorder>
-		<name>Feature: Exhausted</name>
-		<version>1.14</version>
-		<author>Ryan Hagelstrom</author>
-		<description>Adds Exhaustion as a 5E condition and automates the exhaustion stack</description>
+		<loadorder>
+			120
+		</loadorder>
+		<name>
+			Feature: Exhausted
+		</name>
+		<version>
+			1.15
+		</version>
+		<author>
+			Ryan Hagelstrom
+		</author>
+		<description>
+			Adds Exhaustion as a 5E condition and automates the exhaustion stack
+		</description>
 		<ruleset>
-            <name>5E</name>
+			<name>
+				5E
+			</name>
 		</ruleset>
 	</properties>
 	<base>
-    	<icon name="Exhausted" file="graphics/icons/exhausted.png"></icon>
-    	<includefile source="strings/strings_exhausted.xml" />
-    	<script name="EffectsManagerExhausted" file="scripts/manager_effect_exhausted.lua" />
-  	</base>
+		<icon name="Exhausted" file="graphics/icons/exhausted.png">
+		</icon>
+		<includefile source="strings/strings_exhausted.xml" />
+		<script name="EffectsManagerExhausted" file="scripts/manager_effect_exhausted.lua" />
+	</base>
 </root>
