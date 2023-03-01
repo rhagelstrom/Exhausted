@@ -6,19 +6,9 @@ This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 Intern
 https://creativecommons.org/licenses/by-sa/4.0/
 -->
 <root>
-	<string name="option_Exhausted">
-		Exhausted
-	</string>
-	<string name="option_Exhaustion_Verbose">
-		CT: Verbose Exhaustion
-	</string>
-	<string name="option_Exhaustion_Heal">
-		Combat: Add Exhaustion if heal 0 HP
-	</string>
-	<string name="option_Exhaustion_NPC">
-		Combat: Exhaustion NPC if heal 0 HP
-	</string>
-	<string name="option_Exhaustion_One_DND">
-		Playtest: Use One DnD exhausted rules
-	</string>
+	<string name="option_Exhausted">Exhausted</string>
+	<string name="option_Exhaustion_Verbose">CT: Verbose Exhaustion</string>
+	<string name="option_Exhaustion_Heal">Combat: Add Exhaustion if heal 0 HP</string>
+	<string name="option_Exhaustion_NPC">Combat: Exhaustion NPC if heal 0 HP</string>
+	<string name="option_Exhaustion_One_DND">Playtest: Use One DnD exhausted rules</string>
 </root>
