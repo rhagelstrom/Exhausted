@@ -97,21 +97,55 @@ function onClose()
 end
 
 -- luacheck: globals cleanExhaustionEffect
-function cleanExhaustionEffect(rNewEffect)
+function cleanExhaustionEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg)
     local nExhaustionLevel = 0;
+    local rTarget = ActorManager.resolveActor(nodeCT);
+    local rSource = ActorManager.resolveActor(rNewEffect.sSource);
+    local sOriginal = rNewEffect.sName;
+    local aImmuneConditions = ActorManager5E.getConditionImmunities(rTarget, rSource);
+    local aNewEffectComps = {};
+    local aIgnoreComps = {};
+    local bImmune = false;
+    if StringManager.contains(aImmuneConditions, 'exhaustion') then
+        bImmune = true;
+    end
     local aEffectComps = EffectManager.parseEffect(rNewEffect.sName);
     for i, sEffectComp in ipairs(aEffectComps) do
         local rEffectComp = EffectManager.parseEffectCompSimple(sEffectComp);
         if rEffectComp.type:lower() == 'exhaustion' or rEffectComp.original:lower() == 'exhaustion' then
-            if rEffectComp.mod == 0 then
-                rEffectComp.mod = 1;
-                sEffectComp = sEffectComp .. ': 1';
+            if bImmune then
+                table.insert(aIgnoreComps, sEffectComp);
+            else
+                if rEffectComp.mod == 0 then
+                    rEffectComp.mod = 1;
+                    sEffectComp = sEffectComp .. ': 1';
+                end
+                nExhaustionLevel = rEffectComp.mod;
+                table.insert(aNewEffectComps, sEffectComp:upper())
             end
-            aEffectComps[i] = sEffectComp:upper();
-            nExhaustionLevel = rEffectComp.mod;
+        else
+            table.insert(aNewEffectComps, sEffectComp);
         end
     end
-    rNewEffect.sName = EffectManager.rebuildParsedEffect(aEffectComps);
+    rNewEffect.sName = EffectManager.rebuildParsedEffect(aNewEffectComps);
+    if next(aIgnoreComps) then
+        if bShowMsg then
+            local bSecret = ((rNewEffect.nGMOnly or 0) == 1);
+            local sMessage = '';
+            if rNewEffect.sName == '' then
+                sMessage = string.format('%s [\'%s\'] -> [%s]', Interface.getString('effect_label'), sOriginal,
+                                         Interface.getString('effect_status_targetimmune'));
+            else
+                sMessage = string.format('%s [\'%s\'] -> [%s] [%s]', Interface.getString('effect_label'), sOriginal,
+                                         Interface.getString('effect_status_targetpartialimmune'), table.concat(aIgnoreComps, ','));
+            end
+            if bSecret then
+                EffectManager.message(sMessage, nodeCT, true);
+            else
+                EffectManager.message(sMessage, nodeCT, false, sUser);
+            end
+        end
+    end
     return nExhaustionLevel;
 end
 
@@ -252,17 +286,13 @@ function customAddEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg)
         return addEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg);
     end
     local nExhausted = nil;
-    local nExhaustionLevel = EffectsManagerExhausted.cleanExhaustionEffect(rNewEffect);
+    local nExhaustionLevel = EffectsManagerExhausted.cleanExhaustionEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg);
+    -- Immune casued an empty effect so ignore
+    if rNewEffect.sName == '' then
+        return;
+    end
     if nExhaustionLevel > 0 then
         local rActor = ActorManager.resolveActor(nodeCT);
-        local aCancelled = EffectManager5E.checkImmunities(nil, rActor, rNewEffect);
-        if #aCancelled > 0 then
-            local sMessage = string.format('%s [\'%s\'] -> [%s]', Interface.getString('effect_label'), rNewEffect.sName,
-                                           Interface.getString('effect_status_targetimmune'));
-            EffectManager.message(sMessage, nodeCT, false, sUser);
-            return
-        end
-
         nExhausted = EffectsManagerExhausted.sumExhaustion(rActor, nExhaustionLevel);
         if nExhausted then
             nExhaustionLevel = nExhausted;
