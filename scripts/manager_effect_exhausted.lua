@@ -2,6 +2,11 @@
 --	  	Copyright © 2021-2023
 --	  	This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
 --	  	https://creativecommons.org/licenses/by-sa/4.0/
+--
+-- luacheck: globals onInit onTabletopInit onClose cleanExhaustionEffect sumExhaustion updateEffect exhaustionText
+-- luacheck: globals customReduceExhaustion customRest customAddEffect customApplyDamage customParseEffect
+-- luacheck: globals oneDND customGetEffectsBonus oneDNDModExhaustion customOutputResult customOnCastSave customCheckModRoll
+-- luacheck: globals customSkillModRoll customModAttack customModSave customModInit tireless
 local rest = nil;
 local addEffect = nil;
 local applyDamage = nil;
@@ -34,9 +39,16 @@ function onInit()
     table.insert(DataCommon.conditions, 'exhaustion');
     table.sort(DataCommon.conditions);
 
-    OptionsManager.registerOption2('VERBOSE_EXHAUSTION', false, 'option_Exhausted', 'option_Exhaustion_Verbose', 'option_entry_cycler',
-                                   {labels = 'MNM|Verbose', values = 'mnm|verbose', baselabel = 'option_val_off', baseval = 'off', default = 'Off'});
-    OptionsManager.registerOption2('EXHAUSTION_HEAL', false, 'option_Exhausted', 'option_Exhaustion_Heal', 'option_entry_cycler', {
+    OptionsManager.registerOption2('VERBOSE_EXHAUSTION', false, 'option_Exhausted', 'option_Exhaustion_Verbose',
+                                   'option_entry_cycler', {
+        labels = 'MNM|Verbose',
+        values = 'mnm|verbose',
+        baselabel = 'option_val_off',
+        baseval = 'off',
+        default = 'Off'
+    });
+    OptionsManager.registerOption2('EXHAUSTION_HEAL', false, 'option_Exhausted', 'option_Exhaustion_Heal', 'option_entry_cycler',
+                                   {
         labels = 'One|Two|Three|Four|Five|Six',
         values = '1|2|3|4|5|6',
         baselabel = 'option_val_off',
@@ -50,7 +62,8 @@ function onInit()
         baseval = 'off',
         default = 'Off'
     });
-    OptionsManager.registerOption2('ONE_DND_EXHAUSTION', false, 'option_Exhausted', 'option_Exhaustion_One_DND', 'option_entry_cycler',
+    OptionsManager.registerOption2('ONE_DND_EXHAUSTION', false, 'option_Exhausted', 'option_Exhaustion_One_DND',
+                                   'option_entry_cycler',
                                    {labels = 'On', values = 'on', baselabel = 'option_val_off', baseval = 'off', default = 'Off'});
     OptionsManager.registerCallback('ONE_DND_EXHAUSTION', oneDND);
 end
@@ -96,8 +109,7 @@ function onClose()
     ActionsManager.registerModHandler('init', ActionInit.modRoll);
 end
 
--- luacheck: globals cleanExhaustionEffect
-function cleanExhaustionEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg)
+function cleanExhaustionEffect(sUser, _, nodeCT, rNewEffect, bShowMsg)
     local nExhaustionLevel = 0;
     local rTarget = ActorManager.resolveActor(nodeCT);
     local rSource = ActorManager.resolveActor(rNewEffect.sSource);
@@ -110,7 +122,7 @@ function cleanExhaustionEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg)
         bImmune = true;
     end
     local aEffectComps = EffectManager.parseEffect(rNewEffect.sName);
-    for i, sEffectComp in ipairs(aEffectComps) do
+    for _, sEffectComp in ipairs(aEffectComps) do
         local rEffectComp = EffectManager.parseEffectCompSimple(sEffectComp);
         if rEffectComp.type:lower() == 'exhaustion' or rEffectComp.original:lower() == 'exhaustion' then
             if bImmune then
@@ -131,7 +143,7 @@ function cleanExhaustionEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg)
     if next(aIgnoreComps) then
         if bShowMsg then
             local bSecret = ((rNewEffect.nGMOnly or 0) == 1);
-            local sMessage = '';
+            local sMessage;
             if rNewEffect.sName == '' then
                 sMessage = string.format('%s [\'%s\'] -> [%s]', Interface.getString('effect_label'), sOriginal,
                                          Interface.getString('effect_status_targetimmune'));
@@ -156,7 +168,7 @@ function sumExhaustion(rActor, nExhaustionLevel)
     local nodeCT = ActorManager.getCTNode(rActor);
     local nodeEffectsList = DB.getChildren(nodeCT, 'effects');
 
-    for _, nodeEffect in pairs(nodeEffectsList) do
+    for _, nodeEffect in ipairs(nodeEffectsList) do
         local sEffect = DB.getValue(nodeEffect, 'label', '');
         local aEffectComps = EffectManager.parseEffect(sEffect);
         for i, sEffectComp in ipairs(aEffectComps) do
@@ -174,17 +186,16 @@ function sumExhaustion(rActor, nExhaustionLevel)
     return nSummed;
 end
 
--- luacheck: globals updateEffect
 function updateEffect(nodeActor, nodeEffect, sLabel)
     DB.setValue(nodeEffect, 'label', 'string', sLabel);
     local bGMOnly = EffectManager.isGMEffect(nodeActor, nodeEffect);
-    local sMessage = string.format('%s [\'%s\'] -> [%s]', Interface.getString('effect_label'), sLabel, Interface.getString('effect_status_updated'));
+    local sMessage = string.format('%s [\'%s\'] -> [%s]', Interface.getString('effect_label'), sLabel,
+                                   Interface.getString('effect_status_updated'));
     EffectManager.message(sMessage, nodeActor, bGMOnly);
 end
 
 -- Add extra text and also comptibility with Mad Nomads Character Sheet Effects Display Extension
 -- The real solution is for mad nomad support exhaustion in his code.
--- luacheck: globals exhaustionText
 function exhaustionText(sEffect, rActor, nLevel)
     if OptionsManager.isOption('VERBOSE_EXHAUSTION', 'off') or OptionsManager.isOption('VERBOSE_EXHAUSTION', 'Off') or
         OptionsManager.isOption('ONE_DND_EXHAUSTION', 'on') then
@@ -194,15 +205,16 @@ function exhaustionText(sEffect, rActor, nLevel)
     if sNodeType == 'pc' then
         local nSpeed = DB.getValue(nodeActor, 'speed.base', 0);
         local nHPTotal = DB.getValue(nodeActor, 'hp.total', 0);
-        local sDisCheck = '; DISCHK: strength; DISCHK: dexterity; DISCHK: constitution; DISCHK: intelligence; DISCHK: wisdom; DISCHK: charisma';
-        local sDisSave = '; DISATK; DISSAV: strength; DISSAV: dexterity; DISSAV: constitution; DISSAV: intelligence; DISSAV: wisdom; DISSAV: charisma';
+        local sDisCheck =
+            '; DISCHK: strength; DISCHK: dexterity; DISCHK: constitution; DISCHK: intelligence; DISCHK: wisdom; DISCHK: charisma';
+        local sDisSave =
+            '; DISATK; DISSAV: strength; DISSAV: dexterity; DISSAV: constitution; DISSAV: intelligence; DISSAV: wisdom; DISSAV: charisma';
         local sSpeed = '; Speed-';
         local sHPMax = '; MAXHP: -';
         sEffect = sEffect:gsub(';?%s?Speed%-?%+?%d+;?', '');
         sEffect = sEffect:gsub(';?%s?MAXHP%:%s?%-?%+?%d+;?', '');
-        sEffect = sEffect:gsub(
-                      ';?%s?DISATK;%sDISSAV:%sstrength;%sDISSAV:%sdexterity;%sDISSAV:%sconstitution;%sDISSAV:%sintelligence;%sDISSAV:%swisdom;%sDISSAV:%scharisma;?',
-                      '');
+        sEffect = sEffect:gsub(';?%s?DISATK;%sDISSAV:%sstrength;%sDISSAV:%sdexterity;%sDISSAV:%sconstitution;' ..
+                                   '%sDISSAV:%sintelligence;%sDISSAV:%swisdom;%sDISSAV:%scharisma;?', '');
 
         if OptionsManager.isOption('VERBOSE_EXHAUSTION', 'verbose') and not sEffect:match(sDisCheck) then
             sEffect = sEffect .. sDisCheck;
@@ -238,14 +250,13 @@ function exhaustionText(sEffect, rActor, nLevel)
 end
 
 -- Replace SW code to reduce exhaustion on Rest
--- luacheck: globals customReduceExhaustion
 function customReduceExhaustion(nodeCT)
     local rActor = ActorManager.resolveActor(nodeCT);
     if not EffectManager.hasCondition(rActor, 'STAYEXHAUST') then
         -- Check conditionals
         local aEffectsByType = EffectManager5E.getEffectsByType(rActor, 'EXHAUSTION');
         if aEffectsByType and next(aEffectsByType) then
-            for _, nodeEffect in pairs(DB.getChildren(nodeCT, 'effects')) do
+            for _, nodeEffect in ipairs(DB.getChildren(nodeCT, 'effects')) do
                 local sEffect = DB.getValue(nodeEffect, 'label', '');
                 local aEffectComps = EffectManager.parseEffect(sEffect);
 
@@ -267,7 +278,7 @@ function customReduceExhaustion(nodeCT)
         end
     end
 end
--- luacheck: globals customRest
+
 function customRest(nodeChar, bLong)
     local nodeCT = ActorManager.getCTNode(nodeChar);
     local rActor = ActorManager.resolveActor(nodeCT);
@@ -280,7 +291,6 @@ function customRest(nodeChar, bLong)
     rest(nodeChar, bLong);
 end
 
--- luacheck: globals customAddEffect
 function customAddEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg)
     if not nodeCT or not rNewEffect or not rNewEffect.sName then
         return addEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg);
@@ -304,7 +314,6 @@ function customAddEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg)
     end
 end
 
--- luacheck: globals customApplyDamage
 function customApplyDamage(rSource, rTarget, rRoll)
     if not (OptionsManager.isOption('EXHAUSTION_HEAL', 'off') or OptionsManager.isOption('EXHAUSTION_HEAL', 'Off')) then
         local bDead = false;
@@ -359,7 +368,6 @@ function customApplyDamage(rSource, rTarget, rRoll)
     end
 end
 
--- luacheck: globals customParseEffect
 function customParseEffect(sPowerName, aWords)
     local effects = parseEffects(sPowerName, aWords);
     local i = 1;
@@ -382,8 +390,8 @@ function customParseEffect(sPowerName, aWords)
             else
                 bExhaustion = false;
             end
-            if bExhaustion == true and StringManager.isWord(aWords[i + 2], {'level', 'levels'}) and StringManager.isWord(aWords[i + 3], 'of') and
-                StringManager.isWord(aWords[i + 4], 'exhaustion') then
+            if bExhaustion == true and StringManager.isWord(aWords[i + 2], {'level', 'levels'}) and
+                StringManager.isWord(aWords[i + 3], 'of') and StringManager.isWord(aWords[i + 4], 'exhaustion') then
                 local rExhaustion = {};
                 rExhaustion.sName = 'EXHAUSTION: ' .. sLevel;
                 rExhaustion.startindex = i;
@@ -397,7 +405,6 @@ function customParseEffect(sPowerName, aWords)
 end
 
 --------------- One DND ------------------
--- luacheck: globals oneDND
 function oneDND()
     if OptionsManager.isOption('ONE_DND_EXHAUSTION', 'on') then
         ActionCheck.modRoll = customCheckModRoll;
@@ -441,7 +448,6 @@ function oneDND()
 end
 
 -- Scrub out any EXHAUSTION queires here for One DND so 5E mods are not applied.
--- luacheck: globals customGetEffectsBonus
 function customGetEffectsBonus(rActor, aEffectType, bAddEmptyBonus, aFilter, rFilterActor, bTargetedOnly)
     if not rActor or not aEffectType then
         return {}, 0;
@@ -457,7 +463,6 @@ function customGetEffectsBonus(rActor, aEffectType, bAddEmptyBonus, aFilter, rFi
     return getEffectsBonus(rActor, aEffectType, bAddEmptyBonus, aFilter, rFilterActor, bTargetedOnly);
 end
 
--- luacheck: globals oneDNDModExhaustion
 function oneDNDModExhaustion(rSource, _, rRoll)
     local nExhaustMod, nExhaustCount = getEffectsBonus(rSource, {'EXHAUSTION'}, true);
     if nExhaustCount > 0 then
@@ -468,7 +473,6 @@ function oneDNDModExhaustion(rSource, _, rRoll)
     end
 end
 
--- luacheck: globals customOutputResult
 function customOutputResult(bSecret, rSource, rOrigin, msgLong, msgShort)
     local sSubString = msgLong.text:match('%[vs%.%s*DC%s*%d+%]');
     if sSubString then
@@ -482,7 +486,6 @@ function customOutputResult(bSecret, rSource, rOrigin, msgLong, msgShort)
     outputResult(bSecret, rSource, rOrigin, msgLong, msgShort);
 end
 
--- luacheck: globals customOnCastSave
 function customOnCastSave(rSource, rTarget, rRoll)
     local nExhaustMod, nExhaustCount = getEffectsBonus(rSource, {'EXHAUSTION'}, true);
     if nExhaustCount > 0 and nExhaustMod >= 1 then
@@ -496,52 +499,46 @@ function customOnCastSave(rSource, rTarget, rRoll)
     return onCastSave(rSource, rTarget, rRoll);
 end
 
--- luacheck: globals customCheckModRoll
 function customCheckModRoll(rSource, rTarget, rRoll)
     EffectsManagerExhausted.oneDNDModExhaustion(rSource, rTarget, rRoll);
     return checkModRoll(rSource, rTarget, rRoll);
 end
 
--- luacheck: globals customSkillModRoll
 function customSkillModRoll(rSource, rTarget, rRoll)
     EffectsManagerExhausted.oneDNDModExhaustion(rSource, rTarget, rRoll);
     return skillModRoll(rSource, rTarget, rRoll);
 end
 
--- luacheck: globals customModAttack
 function customModAttack(rSource, rTarget, rRoll)
     EffectsManagerExhausted.oneDNDModExhaustion(rSource, rTarget, rRoll);
     return modAttack(rSource, rTarget, rRoll);
 end
 
--- luacheck: globals customModSave
 function customModSave(rSource, rTarget, rRoll)
     EffectsManagerExhausted.oneDNDModExhaustion(rSource, rTarget, rRoll);
     return modSave(rSource, rTarget, rRoll);
 end
 
--- luacheck: globals customModInit
 function customModInit(rSource, rTarget, rRoll)
     EffectsManagerExhausted.oneDNDModExhaustion(rSource, rTarget, rRoll);
     return initModRoll(rSource, rTarget, rRoll);
 end
 
--- luacheck: globals tireless
 function tireless(nodeCT)
     local rActor = ActorManager.resolveActor(nodeCT)
     local sNodeType, nodeActor = ActorManager.getTypeAndNode(rActor);
     if sNodeType == 'pc' then
-        for _, nodeClass in pairs(DB.getChildren(nodeActor, 'classes')) do
+        for _, nodeClass in ipairs(DB.getChildren(nodeActor, 'classes')) do
             local sClassName = StringManager.trim(DB.getValue(nodeClass, 'name', '')):lower();
             if sClassName:match('ranger') then
-                for _, nodeFeature in pairs(DB.getChildren(nodeActor, 'featurelist')) do
+                for _, nodeFeature in ipairs(DB.getChildren(nodeActor, 'featurelist')) do
                     local sFeatureName = StringManager.trim(DB.getValue(nodeFeature, 'name', ''):lower());
                     if sFeatureName:match('tireless') then
                         EffectsManagerExhausted.customReduceExhaustion(nodeCT);
-                        break;
+                        break
                     end
                 end
-                break;
+                break
             end
         end
     end
