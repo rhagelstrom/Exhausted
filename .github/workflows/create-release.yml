@@ -10,15 +10,39 @@ permissions: write-all
 
 env:
   EXTENSION:  '.ext'
-  FILE_TYPE_EXLUSIONS: '*.git* *.css* *.resources* *.vscode* *.yml /*node_modules/* .editorconfig body.md *.psd *.xcf *.mod forge-thumbnail.png *.pdf LICENSE *.DS_Store*'
-  MODULE_PATH: '.resources/'
+  FILE_TYPE_EXLUSIONS: '*.git* *.css* *.resources* *.vscode* *.yml /*node_modules/* ./graphics/documentation/* .editorconfig body.md *.psd *.xcf *.mod forge-thumbnail.png *.pdf LICENSE *.DS_Store*'
+  BADGES: '\[!\[.+\]\(.+\)\]\(.+\)\s?\n?'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+    - name: Get current Date
+      run: echo "DATE=$(date +'%m/%d/%y')" >> $GITHUB_ENV
+
     - name: Checkout Repo Assets
       uses: actions/checkout@v4
+
+    - name: Replace Date
+      uses: jacobtomlinson/gha-find-replace@v3
+      with:
+        find: '~date~'
+        exclude: ${{ env.FILE_TYPE_EXLUSIONS }}
+        replace: ${{ env.DATE }}
+
+    - name: Strip Badges
+      uses: jacobtomlinson/gha-find-replace@v3
+      with:
+        find: ${{ env.BADGES }}
+        exclude: ${{ env.FILE_TYPE_EXLUSIONS }}
+        replace: ' '
+
+    - name: Replace Version
+      uses: jacobtomlinson/gha-find-replace@v3
+      with:
+        find: '~dev_version~'
+        exclude: ${{ env.FILE_TYPE_EXLUSIONS }}
+        replace: ${{github.ref_name}}
 
     - name: Zip Assets Into ${{ github.event.repository.name }}${{ env.EXTENSION }} File
       uses: thedoctor0/zip-release@0.7.6
@@ -26,7 +50,7 @@ jobs:
         filename: ${{ github.event.repository.name }}${{ env.EXTENSION }}
         exclusions: ${{ env.FILE_TYPE_EXLUSIONS }}
 
-    - name: Add ${{ github.event.repository.name }}${{ env.EXTENSION }}, ${{ vars.MODULE }}' to Release
+    - name: Add ${{ github.event.repository.name }}${{ env.EXTENSION }} to Release
       uses: ncipollo/release-action@v1
       with:
         artifacts: ${{ github.event.repository.name }}${{ env.EXTENSION }}
@@ -65,7 +89,9 @@ jobs:
           FG_USER_NAME: ${{ vars.FG_USER_NAME }}
           FG_USER_PASS: ${{ secrets.FG_USER_PASS }}
           FG_ITEM_ID: ${{ vars.FG_ITEM_ID }}
-          FG_README_UPDATE: ${{ vars.FG_README_UPDATE }}
           FG_UL_FILE: ${{ github.event.repository.name }}${{ env.EXTENSION }}
+          # FG_README_UPDATE: 'TRUE'
+          # FG_RELEASE_CHANNEL: 'LIVE'
+        if: ${{ env.FG_ITEM_ID != '' }} # Don't update if we are not set up to do so
         run: |
           python src/main.py

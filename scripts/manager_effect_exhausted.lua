@@ -1,5 +1,5 @@
 --  	Author: Ryan Hagelstrom
---	  	Copyright © 2021-2023
+--	  	Copyright © 2021-2024
 --	  	This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
 --	  	https://creativecommons.org/licenses/by-sa/4.0/
 --
@@ -38,6 +38,10 @@ function onInit()
 
     table.insert(DataCommon.conditions, 'exhaustion');
     table.sort(DataCommon.conditions);
+
+    if PowerUp then
+        PowerUp.registerExtension("Exhausted", "~dev_version~");
+    end
 
     OptionsManager.registerOption2('VERBOSE_EXHAUSTION', false, 'option_Exhausted', 'option_Exhaustion_Verbose',
                                    'option_entry_cycler', {
@@ -133,7 +137,7 @@ function cleanExhaustionEffect(sUser, _, nodeCT, rNewEffect, bShowMsg)
                     sEffectComp = sEffectComp .. ': 1';
                 end
                 nExhaustionLevel = rEffectComp.mod;
-                table.insert(aNewEffectComps, sEffectComp:upper())
+                table.insert(aNewEffectComps, sEffectComp:upper());
             end
         else
             table.insert(aNewEffectComps, sEffectComp);
@@ -168,7 +172,7 @@ function sumExhaustion(rActor, nExhaustionLevel)
     local nodeCT = ActorManager.getCTNode(rActor);
     local nodeEffectsList = DB.getChildren(nodeCT, 'effects');
 
-    for _, nodeEffect in ipairs(nodeEffectsList) do
+    for _, nodeEffect in pairs(nodeEffectsList) do
         local sEffect = DB.getValue(nodeEffect, 'label', '');
         local aEffectComps = EffectManager.parseEffect(sEffect);
         for i, sEffectComp in ipairs(aEffectComps) do
@@ -209,10 +213,10 @@ function exhaustionText(sEffect, rActor, nLevel)
             '; DISCHK: strength; DISCHK: dexterity; DISCHK: constitution; DISCHK: intelligence; DISCHK: wisdom; DISCHK: charisma';
         local sDisSave =
             '; DISATK; DISSAV: strength; DISSAV: dexterity; DISSAV: constitution; DISSAV: intelligence; DISSAV: wisdom; DISSAV: charisma';
-        local sSpeed = '; Speed-';
+        local sSpeed = '; SPEED: -';
         local sHPMax = '; MAXHP: -';
-        sEffect = sEffect:gsub(';?%s?Speed%-?%+?%d+;?', '');
-        sEffect = sEffect:gsub(';?%s?MAXHP%:%s?%-?%+?%d+;?', '');
+        sEffect = sEffect:gsub(';?%s?SPEED:?%s?-?%d+;?', '');
+        sEffect = sEffect:gsub(';?%s?SPEED:?%s?-?%d+;?', '');
         sEffect = sEffect:gsub(';?%s?DISATK;%sDISSAV:%sstrength;%sDISSAV:%sdexterity;%sDISSAV:%sconstitution;' ..
                                    '%sDISSAV:%sintelligence;%sDISSAV:%swisdom;%sDISSAV:%scharisma;?', '');
 
@@ -256,13 +260,12 @@ function customReduceExhaustion(nodeCT)
         -- Check conditionals
         local aEffectsByType = EffectManager5E.getEffectsByType(rActor, 'EXHAUSTION');
         if aEffectsByType and next(aEffectsByType) then
-            for _, nodeEffect in ipairs(DB.getChildren(nodeCT, 'effects')) do
+            for _, nodeEffect in pairs(DB.getChildren(nodeCT, 'effects')) do
                 local sEffect = DB.getValue(nodeEffect, 'label', '');
                 local aEffectComps = EffectManager.parseEffect(sEffect);
-
                 for i, sEffectComp in ipairs(aEffectComps) do
                     local rEffectComp = EffectManager.parseEffectCompSimple(sEffectComp);
-                    if rEffectComp.type:lower() == 'exhaustion' then
+                    if rEffectComp.type:upper() == 'EXHAUSTION' then
                         rEffectComp.mod = rEffectComp.mod - 1;
                         if rEffectComp.mod >= 1 then
                             aEffectComps[i] = rEffectComp.type .. ': ' .. tostring(rEffectComp.mod);
@@ -479,7 +482,7 @@ function customOutputResult(bSecret, rSource, rOrigin, msgLong, msgShort)
         local nExhaustMod, nExhaustCount = getEffectsBonus(rOrigin, {'EXHAUSTION'}, true);
         if nExhaustCount > 0 and nExhaustMod >= 1 then
             sSubString = sSubString:gsub('%[', '%%[');
-            local sModSubString = sSubString .. '%[EXHAUSTED -' .. tostring(nExhaustMod) .. ']'
+            local sModSubString = sSubString .. '%[EXHAUSTED -' .. tostring(nExhaustMod) .. ']';
             msgLong.text = msgLong.text:gsub(sSubString, sModSubString);
         end
     end
@@ -528,10 +531,10 @@ function tireless(nodeCT)
     local rActor = ActorManager.resolveActor(nodeCT)
     local sNodeType, nodeActor = ActorManager.getTypeAndNode(rActor);
     if sNodeType == 'pc' then
-        for _, nodeClass in ipairs(DB.getChildren(nodeActor, 'classes')) do
+        for _, nodeClass in pairs(DB.getChildren(nodeActor, 'classes')) do
             local sClassName = StringManager.trim(DB.getValue(nodeClass, 'name', '')):lower();
             if sClassName:match('ranger') then
-                for _, nodeFeature in ipairs(DB.getChildren(nodeActor, 'featurelist')) do
+                for _, nodeFeature in pairs(DB.getChildren(nodeActor, 'featurelist')) do
                     local sFeatureName = StringManager.trim(DB.getValue(nodeFeature, 'name', ''):lower());
                     if sFeatureName:match('tireless') then
                         EffectsManagerExhausted.customReduceExhaustion(nodeCT);

@@ -3,8 +3,8 @@
 
 [![Build FG Extension](https://github.com/rhagelstrom/Exhausted/actions/workflows/create-release.yml/badge.svg)](https://github.com/rhagelstrom/Exhausted/actions/workflows/create-release.yml) [![Luacheckrc](https://github.com/rhagelstrom/Exhausted/actions/workflows/luacheck.yml/badge.svg)](https://github.com/rhagelstrom/Exhausted/actions/workflows/luacheck.yml) [![Markdownlint](https://github.com/rhagelstrom/Exhausted/actions/workflows/markdownlint.yml/badge.svg)](https://github.com/rhagelstrom/Exhausted/actions/workflows/markdownlint.yml)
 
-**Current Version:** 1.17
-**Last Updated:** 05/20/23
+**Current Version:** ~dev_version~ \
+**Last Updated:** ~date~
 
 5E extension for FantasyGrounds that adds exhaustion as a condition as well as immunities to the exhaustion condition.
 
