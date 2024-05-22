@@ -451,10 +451,13 @@ function oneDND()
 end
 
 -- Scrub out any EXHAUSTION queires here for One DND so 5E mods are not applied.
-function customGetEffectsBonus(rActor, aEffectType, bAddEmptyBonus, aFilter, rFilterActor, bTargetedOnly)
+function customGetEffectsBonus(rActor, aEffectType, bModOnly, aFilter, rFilterActor, bTargetedOnly)
     if not rActor or not aEffectType then
-        return {}, 0;
-    end
+		if bModOnly then
+			return 0, 0;
+		end
+		return {}, 0, 0;
+	end
     if type(aEffectType) ~= 'table' then
         aEffectType = {aEffectType};
     end
@@ -463,7 +466,7 @@ function customGetEffectsBonus(rActor, aEffectType, bAddEmptyBonus, aFilter, rFi
             table.remove(aEffectType, k);
         end
     end
-    return getEffectsBonus(rActor, aEffectType, bAddEmptyBonus, aFilter, rFilterActor, bTargetedOnly);
+    return getEffectsBonus(rActor, aEffectType, bModOnly, aFilter, rFilterActor, bTargetedOnly);
 end
 
 function oneDNDModExhaustion(rSource, _, rRoll)
