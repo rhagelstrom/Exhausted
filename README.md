@@ -20,5 +20,5 @@ NPC Sheets and spells will automatically parse exhaustion as a condition with th
 |---|---|---|---|
 |Combat: Add Exhaustion if heal 0 HP| Off| Off,One,Two,Three,Four,Five,Six| Adds specified number of levels of exhaustion when healed from 0 HP|
 |Combat: Exhaustion NPC if heal 0 HP| Off| Off,All,Friend,Foe,Neutral| Adds level(s) of exhaustion to NPCs if healed from 0 HP|
-|CT: Verbose Exhaustion| Off| Off,MNM,Verbose|Adds extra text to support Mad Nomads Character Sheet Display Extension|
-|Playtest: Use One DnD exhausted rules| Off| Off,On|Use One DnD playtest rules for Exhaustion/Exhausted instead of 5E|
+|CT: Verbose Exhaustion| Off| Off,MNM,Verbose|Adds extra text to support Mad Nomads Character Sheet Display Extension 2014 only|
+|Game -> Ruleset: Use 2024 Rules| On| Off,On|Use 2024 rules for Exhaustion/Exhausted instead of 2014|

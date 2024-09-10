@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <!--
 Author: Ryan Hagelstrom
-Copyright � 2021
+Copyright � 2021-2024
 This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
 https://creativecommons.org/licenses/by-sa/4.0/
 -->
@@ -10,5 +10,5 @@ https://creativecommons.org/licenses/by-sa/4.0/
 	<string name="option_Exhaustion_Verbose">CT: Verbose Exhaustion</string>
 	<string name="option_Exhaustion_Heal">Combat: Add Exhaustion if heal 0 HP</string>
 	<string name="option_Exhaustion_NPC">Combat: Exhaustion NPC if heal 0 HP</string>
-	<string name="option_Exhaustion_One_DND">Playtest: Use One DnD exhausted rules</string>
+	<string name="option_2024_DND">Ruleset: Use 2024 Rules</string>
 </root>
