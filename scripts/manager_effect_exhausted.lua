@@ -5,15 +5,16 @@
 --
 -- luacheck: globals onInit onTabletopInit onClose cleanExhaustionEffect sumExhaustion updateEffect exhaustionText
 -- luacheck: globals customReduceExhaustion customRest customAddEffect customApplyDamage customParseEffect
--- luacheck: globals oneDND customGetEffectsBonus oneDNDModExhaustion customOutputResult customOnCastSave customCheckModRoll
+-- luacheck: globals newDND customGetEffectsBonus newDNDModExhaustion customOutputResult customOnCastSave customCheckModRoll
 -- luacheck: globals customSkillModRoll customModAttack customModSave customModInit tireless
+-- luacheck: globals EffectsManagerExhausted
 local rest = nil;
 local addEffect = nil;
 local applyDamage = nil;
 local parseEffects = nil;
 local reduceExhaustion = nil;
 
--- One DND
+-- 2024 DND
 local checkModRoll = nil;
 local skillModRoll = nil;
 local initModRoll = nil;
@@ -40,7 +41,7 @@ function onInit()
     table.sort(DataCommon.conditions);
 
     if PowerUp then
-        PowerUp.registerExtension("Exhausted", "~dev_version~");
+        PowerUp.registerExtension('Exhausted', '~dev_version~');
     end
 
     OptionsManager.registerOption2('VERBOSE_EXHAUSTION', false, 'option_Exhausted', 'option_Exhaustion_Verbose',
@@ -66,14 +67,14 @@ function onInit()
         baseval = 'off',
         default = 'Off'
     });
-    OptionsManager.registerOption2('ONE_DND_EXHAUSTION', false, 'option_Exhausted', 'option_Exhaustion_One_DND',
-                                   'option_entry_cycler',
-                                   {labels = 'On', values = 'on', baselabel = 'option_val_off', baseval = 'off', default = 'Off'});
-    OptionsManager.registerCallback('ONE_DND_EXHAUSTION', oneDND);
+    -- OptionsManager.registerOption2('2024_DND', false, 'option_header_game', 'option_2024_DND', 'option_entry_cycler',
+    --                                {labels = 'Off', values = 'off', baselabel = 'option_val_on', baseval = 'on', default = 'On'});
+
+    OptionsManager.registerCallback('GAVE', newDND);
 end
 
 function onTabletopInit()
-    -- One DND
+    -- 2024 DND
     checkModRoll = ActionCheck.modRoll;
     skillModRoll = ActionSkill.modRoll;
     modAttack = ActionAttack.modAttack;
@@ -83,7 +84,7 @@ function onTabletopInit()
     outputResult = ActionsManager.outputResult;
     initModRoll = ActionInit.modRoll;
 
-    oneDND();
+    newDND();
 end
 
 function onClose()
@@ -92,7 +93,7 @@ function onClose()
     ActionDamage.applyDamage = applyDamage;
     PowerManager.parseEffects = parseEffects;
     CombatManager2.reduceExhaustion = reduceExhaustion;
-    OptionsManager.unregisterCallback('ONE_DND_EXHAUSTION', oneDND);
+    OptionsManager.unregisterCallback('GAVE', newDND);
     ActionCheck.modRoll = checkModRoll;
     ActionSkill.modRoll = skillModRoll;
     ActionAttack.modAttack = modAttack;
@@ -202,7 +203,7 @@ end
 -- The real solution is for mad nomad support exhaustion in his code.
 function exhaustionText(sEffect, rActor, nLevel)
     if OptionsManager.isOption('VERBOSE_EXHAUSTION', 'off') or OptionsManager.isOption('VERBOSE_EXHAUSTION', 'Off') or
-        OptionsManager.isOption('ONE_DND_EXHAUSTION', 'on') then
+        OptionsManager.isOption('GAVE', '2024') then
         return sEffect;
     end
     local sNodeType, nodeActor = ActorManager.getTypeAndNode(rActor);
@@ -285,7 +286,7 @@ end
 function customRest(nodeChar, bLong)
     local nodeCT = ActorManager.getCTNode(nodeChar);
     local rActor = ActorManager.resolveActor(nodeCT);
-    if not bLong and OptionsManager.isOption('ONE_DND_EXHAUSTION', 'on') then
+    if not bLong and OptionsManager.isOption('GAVE', '2024') then
         local aEffectsByType = EffectManager5E.getEffectsByType(rActor, 'EXHAUSTION');
         if aEffectsByType and next(aEffectsByType) then
             EffectsManagerExhausted.tireless(nodeCT);
@@ -407,9 +408,9 @@ function customParseEffect(sPowerName, aWords)
     return effects;
 end
 
---------------- One DND ------------------
-function oneDND()
-    if OptionsManager.isOption('ONE_DND_EXHAUSTION', 'on') then
+--------------- 2024 DND ------------------
+function newDND()
+    if OptionsManager.isOption('GAVE', '2024') then
         ActionCheck.modRoll = customCheckModRoll;
         ActionSkill.modRoll = customSkillModRoll;
         ActionAttack.modAttack = customModAttack;
@@ -450,14 +451,14 @@ function oneDND()
     end
 end
 
--- Scrub out any EXHAUSTION queires here for One DND so 5E mods are not applied.
+-- Scrub out any EXHAUSTION queires here for 2024 DND so 5E mods are not applied.
 function customGetEffectsBonus(rActor, aEffectType, bModOnly, aFilter, rFilterActor, bTargetedOnly)
     if not rActor or not aEffectType then
-		if bModOnly then
-			return 0, 0;
-		end
-		return {}, 0, 0;
-	end
+        if bModOnly then
+            return 0, 0;
+        end
+        return {}, 0, 0;
+    end
     if type(aEffectType) ~= 'table' then
         aEffectType = {aEffectType};
     end
@@ -469,10 +470,11 @@ function customGetEffectsBonus(rActor, aEffectType, bModOnly, aFilter, rFilterAc
     return getEffectsBonus(rActor, aEffectType, bModOnly, aFilter, rFilterActor, bTargetedOnly);
 end
 
-function oneDNDModExhaustion(rSource, _, rRoll)
+function newDNDModExhaustion(rSource, _, rRoll)
     local nExhaustMod, nExhaustCount = getEffectsBonus(rSource, {'EXHAUSTION'}, true);
     if nExhaustCount > 0 then
         if nExhaustMod >= 1 then
+            nExhaustMod = nExhaustMod * 2;
             rRoll.nMod = rRoll.nMod - nExhaustMod;
             rRoll.sDesc = rRoll.sDesc .. ' [EXHAUSTED -' .. tostring(nExhaustMod) .. ']';
         end
@@ -484,6 +486,7 @@ function customOutputResult(bSecret, rSource, rOrigin, msgLong, msgShort)
     if sSubString then
         local nExhaustMod, nExhaustCount = getEffectsBonus(rOrigin, {'EXHAUSTION'}, true);
         if nExhaustCount > 0 and nExhaustMod >= 1 then
+            nExhaustMod = nExhaustMod * 2;
             sSubString = sSubString:gsub('%[', '%%[');
             local sModSubString = sSubString .. '%[EXHAUSTED -' .. tostring(nExhaustMod) .. ']';
             msgLong.text = msgLong.text:gsub(sSubString, sModSubString);
@@ -495,6 +498,7 @@ end
 function customOnCastSave(rSource, rTarget, rRoll)
     local nExhaustMod, nExhaustCount = getEffectsBonus(rSource, {'EXHAUSTION'}, true);
     if nExhaustCount > 0 and nExhaustMod >= 1 then
+        nExhaustMod = nExhaustMod * 2;
         rRoll.nMod = rRoll.nMod - nExhaustMod;
         local sSubString = rRoll.sDesc:match('%[%s*%a+%s*DC%s*%d+%]'):gsub('%[', '%%[');
         local sDC = sSubString:match('(%d+)');
@@ -506,27 +510,27 @@ function customOnCastSave(rSource, rTarget, rRoll)
 end
 
 function customCheckModRoll(rSource, rTarget, rRoll)
-    EffectsManagerExhausted.oneDNDModExhaustion(rSource, rTarget, rRoll);
+    EffectsManagerExhausted.newDNDModExhaustion(rSource, rTarget, rRoll);
     return checkModRoll(rSource, rTarget, rRoll);
 end
 
 function customSkillModRoll(rSource, rTarget, rRoll)
-    EffectsManagerExhausted.oneDNDModExhaustion(rSource, rTarget, rRoll);
+    EffectsManagerExhausted.newDNDModExhaustion(rSource, rTarget, rRoll);
     return skillModRoll(rSource, rTarget, rRoll);
 end
 
 function customModAttack(rSource, rTarget, rRoll)
-    EffectsManagerExhausted.oneDNDModExhaustion(rSource, rTarget, rRoll);
+    EffectsManagerExhausted.newDNDModExhaustion(rSource, rTarget, rRoll);
     return modAttack(rSource, rTarget, rRoll);
 end
 
 function customModSave(rSource, rTarget, rRoll)
-    EffectsManagerExhausted.oneDNDModExhaustion(rSource, rTarget, rRoll);
+    EffectsManagerExhausted.newDNDModExhaustion(rSource, rTarget, rRoll);
     return modSave(rSource, rTarget, rRoll);
 end
 
 function customModInit(rSource, rTarget, rRoll)
-    EffectsManagerExhausted.oneDNDModExhaustion(rSource, rTarget, rRoll);
+    EffectsManagerExhausted.newDNDModExhaustion(rSource, rTarget, rRoll);
     return initModRoll(rSource, rTarget, rRoll);
 end
 
