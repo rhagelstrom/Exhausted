@@ -8,6 +8,7 @@ https://creativecommons.org/licenses/by-sa/4.0/
 <root>
 	<string name="option_Exhausted">Exhausted</string>
 	<string name="option_Exhaustion_Verbose">CT: Verbose Exhaustion</string>
-	<string name="option_Exhaustion_Heal">Combat: Add Exhaustion if heal 0 HP</string>
-	<string name="option_Exhaustion_NPC">Combat: Exhaustion NPC if heal 0 HP</string>
+	<string name="option_Exhaustion_Heal">House Rule: Add Exhaustion if heal 0 HP</string>
+	<string name="option_Exhaustion_NPC">House Rule: Exhaustion NPC if heal 0 HP</string>
+	<string name="option_Exhaustion_One_DND">House Rule: Exhaustion is -1 to d20 roll</string>
 </root>
