@@ -20,5 +20,5 @@ NPC Sheets and spells will automatically parse exhaustion as a condition with th
 |---|---|---|---|
 |CT: Verbose Exhaustion| Off| Off,MNM,Verbose|Adds extra text to support Mad Nomads Character Sheet Display Extension 2014 only|
 |House Rule: Add Exhaustion if heal 0 HP| Off| Off,One,Two,Three,Four,Five,Six| Adds specified number of levels of exhaustion when healed from 0 HP|
-|House Rule: House Rule: Exhaustion is -1 to d20 roll| Off| Off,On| Use -1 to d20 rule for exhaustion. Override Legacy and 2024 settings|
+|House Rule: House Rule: Exhaustion is minus to d20 roll| Off| Off,One,Two,Three| Use minus to d20 rule for exhaustion. Override Legacy and 2024 settings|
 |House Rule: Exhaustion NPC if heal 0 HP| Off| Off,All,Friend,Foe,Neutral| Adds level(s) of exhaustion to NPCs if healed from 0 HP|

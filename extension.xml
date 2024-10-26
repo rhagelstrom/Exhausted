@@ -12,7 +12,7 @@
 		</ruleset>
 	</properties>
 	<base>
-		<icon name="Exhausted" file="graphics/icons/exhausted.png">
+		<icon name="Exhausted" file="graphics/icons/exhausted.webp">
 		</icon>
 		<includefile source="strings/strings_exhausted.xml" />
 		<script name="EffectsManagerExhausted" file="scripts/manager_effect_exhausted.lua" />

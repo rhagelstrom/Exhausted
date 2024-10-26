@@ -1,7 +1,7 @@
---  	Author: Ryan Hagelstrom
---	  	Copyright © 2021-2024
---	  	This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
---	  	https://creativecommons.org/licenses/by-sa/4.0/
+-- Author: Ryan Hagelstrom
+-- Copyright © 2021-2024
+-- Please see the license file included with this distribution for
+-- attribution and copyright information.
 --
 -- luacheck: globals onInit onTabletopInit onClose cleanExhaustionEffect sumExhaustion updateEffect exhaustionText
 -- luacheck: globals customReduceExhaustion customRest customAddEffect customApplyDamage customParseEffect
@@ -68,8 +68,13 @@ function onInit()
         default = 'Off'
     });
     OptionsManager.registerOption2('ONE_DND_EXHAUSTION', false, 'option_Exhausted', 'option_Exhaustion_One_DND',
-                                   'option_entry_cycler',
-                                   {labels = 'On', values = 'on', baselabel = 'option_val_off', baseval = 'off', default = 'Off'});
+                                   'option_entry_cycler', {
+        labels = 'One|Two|Three',
+        values = '1|2|3',
+        baselabel = 'option_val_off',
+        baseval = 'off',
+        default = 'Off'
+    });
 
     OptionsManager.registerCallback('ONE_DND_EXHAUSTION', newDND);
     OptionsManager.registerCallback('GAVE', newDND);
@@ -206,7 +211,7 @@ end
 -- The real solution is for mad nomad support exhaustion in his code.
 function exhaustionText(sEffect, rActor, nLevel)
     if OptionsManager.isOption('VERBOSE_EXHAUSTION', 'off') or OptionsManager.isOption('VERBOSE_EXHAUSTION', 'Off') or
-        OptionsManager.isOption('GAVE', '2024') or OptionsManager.isOption('ONE_DND_EXHAUSTION', 'on') then
+        OptionsManager.isOption('GAVE', '2024') or not OptionsManager.isOption('ONE_DND_EXHAUSTION', 'off') then
         return sEffect;
     end
     local sNodeType, nodeActor = ActorManager.getTypeAndNode(rActor);
@@ -413,7 +418,7 @@ end
 
 --------------- 2024 DND ------------------
 function newDND()
-    if OptionsManager.isOption('GAVE', '2024') or OptionsManager.isOption('ONE_DND_EXHAUSTION', 'on') then
+    if OptionsManager.isOption('GAVE', '2024') or not OptionsManager.isOption('ONE_DND_EXHAUSTION', 'off') then
         ActionCheck.modRoll = customCheckModRoll;
         ActionSkill.modRoll = customSkillModRoll;
         ActionAttack.modAttack = customModAttack;
@@ -477,8 +482,10 @@ function newDNDModExhaustion(rSource, _, rRoll)
     local nExhaustMod, nExhaustCount = getEffectsBonus(rSource, {'EXHAUSTION'}, true);
     if nExhaustCount > 0 then
         if nExhaustMod >= 1 then
-            if not OptionsManager.isOption('ONE_DND_EXHAUSTION', 'on') then
+            if OptionsManager.isOption('ONE_DND_EXHAUSTION', 'off') or OptionsManager.isOption('ONE_DND_EXHAUSTION', '2') then
                 nExhaustMod = nExhaustMod * 2;
+            elseif OptionsManager.isOption('ONE_DND_EXHAUSTION', '3') then
+                nExhaustMod = nExhaustMod * 3;
             end
             rRoll.nMod = rRoll.nMod - nExhaustMod;
             rRoll.sDesc = rRoll.sDesc .. ' [EXHAUSTED -' .. tostring(nExhaustMod) .. ']';
@@ -491,8 +498,10 @@ function customOutputResult(bSecret, rSource, rOrigin, msgLong, msgShort)
     if sSubString then
         local nExhaustMod, nExhaustCount = getEffectsBonus(rOrigin, {'EXHAUSTION'}, true);
         if nExhaustCount > 0 and nExhaustMod >= 1 then
-            if not OptionsManager.isOption('ONE_DND_EXHAUSTION', 'on') then
+            if OptionsManager.isOption('ONE_DND_EXHAUSTION', 'off') or OptionsManager.isOption('ONE_DND_EXHAUSTION', '2') then
                 nExhaustMod = nExhaustMod * 2;
+            elseif OptionsManager.isOption('ONE_DND_EXHAUSTION', '3') then
+                nExhaustMod = nExhaustMod * 3;
             end
             sSubString = sSubString:gsub('%[', '%%[');
             local sModSubString = sSubString .. '%[EXHAUSTED -' .. tostring(nExhaustMod) .. ']';
@@ -505,8 +514,10 @@ end
 function customOnCastSave(rSource, rTarget, rRoll)
     local nExhaustMod, nExhaustCount = getEffectsBonus(rSource, {'EXHAUSTION'}, true);
     if nExhaustCount > 0 and nExhaustMod >= 1 then
-        if not OptionsManager.isOption('ONE_DND_EXHAUSTION', 'on') then
+        if OptionsManager.isOption('ONE_DND_EXHAUSTION', 'off') or OptionsManager.isOption('ONE_DND_EXHAUSTION', '2') then
             nExhaustMod = nExhaustMod * 2;
+        elseif OptionsManager.isOption('ONE_DND_EXHAUSTION', '3') then
+            nExhaustMod = nExhaustMod * 3;
         end
         rRoll.nMod = rRoll.nMod - nExhaustMod;
         local sSubString = rRoll.sDesc:match('%[%s*%a+%s*DC%s*%d+%]'):gsub('%[', '%%[');
