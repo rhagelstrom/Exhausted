@@ -13,7 +13,7 @@ env:
   PDF: '.pdf'
   MARKDOWN: '.md'
   README: 'README'
-  FILE_TYPE_EXLUSIONS: '*.git* *.css* *.resources* *.vscode* *.yml /*node_modules/* ./graphics/documentation/* .editorconfig body.md *.psd *.xcf *.mod forge-thumbnail.png *.pdf LICENSE *.DS_Store*'
+  FILE_TYPE_EXLUSIONS: '*.git* *.css* *.resources* *.vscode* *.yml /*node_modules/* ./graphics/documentation/* .editorconfig body.md *.psd *.xcf *.mod forge-thumbnail.png *.pdf *.DS_Store*'
   RESOURCES: '.resources/'
   GITHUB: '.github/'
   THEME: '.css/torillic.css'

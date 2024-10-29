@@ -6,7 +6,7 @@
 -- luacheck: globals onInit onTabletopInit onClose cleanExhaustionEffect sumExhaustion updateEffect exhaustionText
 -- luacheck: globals customReduceExhaustion customRest customAddEffect customApplyDamage customParseEffect
 -- luacheck: globals newDND customGetEffectsBonus newDNDModExhaustion customOutputResult customOnCastSave customCheckModRoll
--- luacheck: globals customSkillModRoll customModAttack customModSave customModInit tireless
+-- luacheck: globals customSkillModRoll customModAttack customModSave customModInit tireless customPerformAction
 -- luacheck: globals EffectsManagerExhausted
 local rest = nil;
 local addEffect = nil;
@@ -23,6 +23,9 @@ local modSave = nil;
 local getEffectsBonus = nil;
 local onCastSave = nil;
 local outputResult = nil;
+local performAction = nil;
+
+local bOneDnD = false;
 
 function onInit()
     rest = CharManager.rest;
@@ -418,7 +421,8 @@ end
 
 --------------- 2024 DND ------------------
 function newDND()
-    if OptionsManager.isOption('GAVE', '2024') or not OptionsManager.isOption('ONE_DND_EXHAUSTION', 'off') then
+    if OptionsManager.isOption('GAVE', '2024') or not OptionsManager.isOption('ONE_DND_EXHAUSTION', 'off') and not bOneDnD then
+        bOneDnD = true;
         ActionCheck.modRoll = customCheckModRoll;
         ActionSkill.modRoll = customSkillModRoll;
         ActionAttack.modAttack = customModAttack;
@@ -437,7 +441,11 @@ function newDND()
         ActionsManager.registerModHandler('concentration', customModSave);
         ActionsManager.registerModHandler('systemshock', customModSave);
         ActionsManager.registerModHandler('init', customModInit);
-    else
+
+        performAction = ActionsManager.performAction;
+        ActionsManager.performAction = customPerformAction;
+    elseif bOneDnD and not (OptionsManager.isOption('GAVE', '2024') or not OptionsManager.isOption('ONE_DND_EXHAUSTION', 'off')) then
+        bOneDnD = false;
         ActionCheck.modRoll = checkModRoll;
         ActionSkill.modRoll = skillModRoll;
         ActionAttack.modAttack = modAttack;
@@ -456,6 +464,8 @@ function newDND()
         ActionsManager.registerModHandler('concentration', modSave);
         ActionsManager.registerModHandler('systemshock', modSave);
         ActionsManager.registerModHandler('init', initModRoll);
+
+        ActionsManager.performAction = performAction;
     end
 end
 
@@ -572,4 +582,11 @@ function tireless(nodeCT)
             end
         end
     end
+end
+
+function customPerformAction(draginfo, rActor, rRoll)
+    if rRoll and rRoll.sType and (rRoll.sType == 'genactroll' or rRoll.sType == 'genactresult') then
+        EffectsManagerExhausted.newDNDModExhaustion(rActor, nil, rRoll);
+    end
+    performAction(draginfo, rActor, rRoll);
 end
