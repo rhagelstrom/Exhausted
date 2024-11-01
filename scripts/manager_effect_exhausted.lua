@@ -6,7 +6,7 @@
 -- luacheck: globals onInit onTabletopInit onClose cleanExhaustionEffect sumExhaustion updateEffect exhaustionText
 -- luacheck: globals customReduceExhaustion customRest customAddEffect customApplyDamage customParseEffect
 -- luacheck: globals newDND customGetEffectsBonus newDNDModExhaustion customOutputResult customOnCastSave customCheckModRoll
--- luacheck: globals customSkillModRoll customModAttack customModSave customModInit tireless customPerformAction
+-- luacheck: globals customModAttack customModSave customModInit tireless customPerformAction
 -- luacheck: globals EffectsManagerExhausted
 local rest = nil;
 local addEffect = nil;
@@ -16,7 +16,6 @@ local reduceExhaustion = nil;
 
 -- 2024 DND
 local checkModRoll = nil;
-local skillModRoll = nil;
 local initModRoll = nil;
 local modAttack = nil;
 local modSave = nil;
@@ -86,7 +85,6 @@ end
 function onTabletopInit()
     -- 2024 DND
     checkModRoll = ActionCheck.modRoll;
-    skillModRoll = ActionSkill.modRoll;
     modAttack = ActionAttack.modAttack;
     modSave = ActionSave.modSave;
     getEffectsBonus = EffectManager5E.getEffectsBonus;
@@ -106,7 +104,6 @@ function onClose()
     OptionsManager.unregisterCallback('GAVE', newDND);
     OptionsManager.unregisterCallback('ONE_DND_EXHAUSTION', newDND);
     ActionCheck.modRoll = checkModRoll;
-    ActionSkill.modRoll = skillModRoll;
     ActionAttack.modAttack = modAttack;
     ActionSave.modSave = modSave;
     EffectManager5E.getEffectsBonus = getEffectsBonus;
@@ -424,7 +421,6 @@ function newDND()
     if OptionsManager.isOption('GAVE', '2024') or not OptionsManager.isOption('ONE_DND_EXHAUSTION', 'off') and not bOneDnD then
         bOneDnD = true;
         ActionCheck.modRoll = customCheckModRoll;
-        ActionSkill.modRoll = customSkillModRoll;
         ActionAttack.modAttack = customModAttack;
         ActionSave.modSave = customModSave;
         EffectManager5E.getEffectsBonus = customGetEffectsBonus;
@@ -433,7 +429,6 @@ function newDND()
         ActionInit.modRoll = customModInit;
 
         ActionsManager.registerModHandler('check', customCheckModRoll);
-        ActionsManager.registerModHandler('skill', customSkillModRoll);
         ActionsManager.registerModHandler('attack', customModAttack);
         ActionsManager.registerModHandler('save', customModSave);
         ActionsManager.registerModHandler('death', customModSave);
@@ -447,7 +442,6 @@ function newDND()
     elseif bOneDnD and not (OptionsManager.isOption('GAVE', '2024') or not OptionsManager.isOption('ONE_DND_EXHAUSTION', 'off')) then
         bOneDnD = false;
         ActionCheck.modRoll = checkModRoll;
-        ActionSkill.modRoll = skillModRoll;
         ActionAttack.modAttack = modAttack;
         ActionSave.modSave = modSave;
         EffectManager5E.getEffectsBonus = getEffectsBonus;
@@ -456,7 +450,6 @@ function newDND()
         ActionInit.modRoll = initModRoll;
 
         ActionsManager.registerModHandler('check', checkModRoll);
-        ActionsManager.registerModHandler('skill', skillModRoll);
         ActionsManager.registerModHandler('attack', modAttack);
         ActionsManager.registerModHandler('save', modSave);
         ActionsManager.registerModHandler('death', modSave);
@@ -542,11 +535,6 @@ end
 function customCheckModRoll(rSource, rTarget, rRoll)
     EffectsManagerExhausted.newDNDModExhaustion(rSource, rTarget, rRoll);
     return checkModRoll(rSource, rTarget, rRoll);
-end
-
-function customSkillModRoll(rSource, rTarget, rRoll)
-    EffectsManagerExhausted.newDNDModExhaustion(rSource, rTarget, rRoll);
-    return skillModRoll(rSource, rTarget, rRoll);
 end
 
 function customModAttack(rSource, rTarget, rRoll)
