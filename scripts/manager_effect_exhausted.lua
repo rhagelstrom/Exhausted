@@ -91,7 +91,6 @@ function onTabletopInit()
     onCastSave = ActionPower.onCastSave;
     outputResult = ActionsManager.outputResult;
     initModRoll = ActionInit.modRoll;
-
     newDND();
 end
 
@@ -418,7 +417,7 @@ end
 
 --------------- 2024 DND ------------------
 function newDND()
-    if OptionsManager.isOption('GAVE', '2024') or not OptionsManager.isOption('ONE_DND_EXHAUSTION', 'off') and not bOneDnD then
+    if not bOneDnD and (OptionsManager.isOption('GAVE', '2024') or not OptionsManager.isOption('ONE_DND_EXHAUSTION', 'off')) then
         bOneDnD = true;
         ActionCheck.modRoll = customCheckModRoll;
         ActionAttack.modAttack = customModAttack;
