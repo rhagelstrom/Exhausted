@@ -22,5 +22,6 @@
 | --- | --- | --- | --- |
 | **CT: Verbose Exhaustion** | Off | Off, MNM, Verbose | Adds extra text for Mad Nomads Character Sheet Display Extension (2014 only) |
 | **House Rule: Add Exhaustion if heal 0 HP**  | Off | Off, One, Two, Three, Four, Five, Six | Adds specified levels of exhaustion when healed from 0 HP |
+| **House Rule: Affect Spell Save DC for d20 roll** | Off | Off, On | When using minus d20 rules, also affect the spell save DC |
 | **House Rule: Exhaustion is minus to d20 roll** | Off| Off, One, Two, Three | Applies a penalty to d20 rolls due to exhaustion; overrides Legacy and 2024 settings |
 | **House Rule: Exhaustion NPC if heal 0 HP** | Off | Off, All, Friend, Foe, Neutral | Adds levels of exhaustion to NPCs when healed from 0 HP  |
