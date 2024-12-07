@@ -77,9 +77,18 @@ function onInit()
         baseval = 'off',
         default = 'Off'
     });
+    OptionsManager.registerOption2('EXHAUSTION_SDC', false, 'option_Exhausted', 'option_Exhaustion_SDC',
+                                   'option_entry_cycler', {
+        labels = 'On',
+        values = 'on',
+        baselabel = 'option_val_off',
+        baseval = 'off',
+        default = 'Off'
+    });
 
     OptionsManager.registerCallback('ONE_DND_EXHAUSTION', newDND);
     OptionsManager.registerCallback('GAVE', newDND);
+    OptionsManager.registerCallback('EXHAUSTION_SDC', newDND);
 end
 
 function onTabletopInit()
@@ -91,6 +100,7 @@ function onTabletopInit()
     onCastSave = ActionPower.onCastSave;
     outputResult = ActionsManager.outputResult;
     initModRoll = ActionInit.modRoll;
+    performAction = ActionsManager.performAction;
     newDND();
 end
 
@@ -423,7 +433,7 @@ function newDND()
         ActionAttack.modAttack = customModAttack;
         ActionSave.modSave = customModSave;
         EffectManager5E.getEffectsBonus = customGetEffectsBonus;
-        ActionPower.onCastSave = customOnCastSave;
+
         ActionsManager.outputResult = customOutputResult;
         ActionInit.modRoll = customModInit;
 
@@ -436,7 +446,6 @@ function newDND()
         ActionsManager.registerModHandler('systemshock', customModSave);
         ActionsManager.registerModHandler('init', customModInit);
 
-        performAction = ActionsManager.performAction;
         ActionsManager.performAction = customPerformAction;
     elseif bOneDnD and not (OptionsManager.isOption('GAVE', '2024') or not OptionsManager.isOption('ONE_DND_EXHAUSTION', 'off')) then
         bOneDnD = false;
@@ -444,7 +453,6 @@ function newDND()
         ActionAttack.modAttack = modAttack;
         ActionSave.modSave = modSave;
         EffectManager5E.getEffectsBonus = getEffectsBonus;
-        ActionPower.onCastSave = onCastSave;
         ActionsManager.outputResult = outputResult;
         ActionInit.modRoll = initModRoll;
 
@@ -458,6 +466,11 @@ function newDND()
         ActionsManager.registerModHandler('init', initModRoll);
 
         ActionsManager.performAction = performAction;
+    end
+    if bOneDnD and OptionsManager.isOption('EXHAUSTION_SDC', 'on') then
+        ActionPower.onCastSave = customOnCastSave;
+    else
+        ActionPower.onCastSave = onCastSave;
     end
 end
 

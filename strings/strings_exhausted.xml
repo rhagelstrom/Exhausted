@@ -11,4 +11,6 @@
 	<string name="option_Exhaustion_Heal">House Rule: Add Exhaustion if heal 0 HP</string>
 	<string name="option_Exhaustion_NPC">House Rule: Exhaustion NPC if heal 0 HP</string>
 	<string name="option_Exhaustion_One_DND">House Rule: Exhaustion is -1 to d20 roll</string>
+	<string name="option_Exhaustion_SDC">House Rule: Affect Spell Save DC for d20 roll</string>
+
 </root>
