@@ -7,7 +7,7 @@
 -- luacheck: globals customReduceExhaustion customRest customAddEffect customApplyDamage customParseEffect
 -- luacheck: globals newDND customGetEffectsBonus newDNDModExhaustion customOutputResult customOnCastSave customCheckModRoll
 -- luacheck: globals customModAttack customModSave customModInit tireless customPerformAction
--- luacheck: globals EffectsManagerExhausted
+-- luacheck: globals EffectsManagerExhausted bOneDnD
 local rest = nil;
 local addEffect = nil;
 local applyDamage = nil;
@@ -24,7 +24,7 @@ local onCastSave = nil;
 local outputResult = nil;
 local performAction = nil;
 
-local bOneDnD = false;
+bOneDnD = false;
 
 function onInit()
     rest = CharManager.rest;
@@ -77,14 +77,8 @@ function onInit()
         baseval = 'off',
         default = 'Off'
     });
-    OptionsManager.registerOption2('EXHAUSTION_SDC', false, 'option_Exhausted', 'option_Exhaustion_SDC',
-                                   'option_entry_cycler', {
-        labels = 'On',
-        values = 'on',
-        baselabel = 'option_val_off',
-        baseval = 'off',
-        default = 'Off'
-    });
+    OptionsManager.registerOption2('EXHAUSTION_SDC', false, 'option_Exhausted', 'option_Exhaustion_SDC', 'option_entry_cycler',
+                                   {labels = 'On', values = 'on', baselabel = 'option_val_off', baseval = 'off', default = 'Off'});
 
     OptionsManager.registerCallback('ONE_DND_EXHAUSTION', newDND);
     OptionsManager.registerCallback('GAVE', newDND);
@@ -427,7 +421,8 @@ end
 
 --------------- 2024 DND ------------------
 function newDND()
-    if not bOneDnD and (OptionsManager.isOption('GAVE', '2024') or not OptionsManager.isOption('ONE_DND_EXHAUSTION', 'off')) then
+    if not bOneDnD and (OptionsManager.isOption('GAVE', '2024') or
+        (not OptionsManager.isOption('GAVE', '2024') and not OptionsManager.isOption('ONE_DND_EXHAUSTION', 'off'))) then
         bOneDnD = true;
         ActionCheck.modRoll = customCheckModRoll;
         ActionAttack.modAttack = customModAttack;
