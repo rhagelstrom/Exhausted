@@ -12,6 +12,7 @@
 
 * **STAYEXHAUST Effect**: Prevents exhaustion levels from decrementing during a long rest.
 * **Automatic Parsing**: NPC Sheets and spells recognize exhaustion conditions, noting "target is exhaustion" or "gain(s)/suffer(s) (N) level(s) of exhaustion".
+* **Tireless**: Support for 2024 Tireless Ranger Feature
 
 > **Note**: If using SilentRuin's Generic Actions extension, ensure **Verify Cast Effect** is set to "off".
 

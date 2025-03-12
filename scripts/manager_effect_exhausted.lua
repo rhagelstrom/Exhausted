@@ -46,14 +46,6 @@ function onInit()
         PowerUp.registerExtension('Exhausted', '~dev_version~');
     end
 
-    OptionsManager.registerOption2('VERBOSE_EXHAUSTION', false, 'option_Exhausted', 'option_Exhaustion_Verbose',
-                                   'option_entry_cycler', {
-        labels = 'MNM|Verbose',
-        values = 'mnm|verbose',
-        baselabel = 'option_val_off',
-        baseval = 'off',
-        default = 'Off'
-    });
     OptionsManager.registerOption2('EXHAUSTION_HEAL', false, 'option_Exhausted', 'option_Exhaustion_Heal', 'option_entry_cycler',
                                    {
         labels = 'One|Two|Three|Four|Five|Six',
@@ -148,7 +140,7 @@ function cleanExhaustionEffect(sUser, _, nodeCT, rNewEffect, bShowMsg)
                     rEffectComp.mod = 1;
                     sEffectComp = sEffectComp .. ': 1';
                 end
-                nExhaustionLevel = rEffectComp.mod;
+                nExhaustionLevel = nExhaustionLevel + rEffectComp.mod;
                 table.insert(aNewEffectComps, sEffectComp:upper());
             end
         else
@@ -178,7 +170,6 @@ function cleanExhaustionEffect(sUser, _, nodeCT, rNewEffect, bShowMsg)
 end
 
 -- Return return the sum total else return nil
--- luacheck: globals sumExhaustion
 function sumExhaustion(rActor, nExhaustionLevel)
     local nSummed = nil;
     local nodeCT = ActorManager.getCTNode(rActor);
@@ -253,7 +244,6 @@ function customAddEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg)
     if not nodeCT or not rNewEffect or not rNewEffect.sName then
         return addEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg);
     end
-    local nExhausted = nil;
     local nExhaustionLevel = EffectsManagerExhausted.cleanExhaustionEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg);
     -- Immune casued an empty effect so ignore
     if rNewEffect.sName == '' then
@@ -261,12 +251,8 @@ function customAddEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg)
     end
     if nExhaustionLevel > 0 then
         local rActor = ActorManager.resolveActor(nodeCT);
-        nExhausted = EffectsManagerExhausted.sumExhaustion(rActor, nExhaustionLevel);
-        if nExhausted then
-            nExhaustionLevel = nExhausted;
-        end
-    end
-    if not nExhausted then
+        EffectsManagerExhausted.sumExhaustion(rActor, nExhaustionLevel);
+    else
         addEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg);
     end
 end
