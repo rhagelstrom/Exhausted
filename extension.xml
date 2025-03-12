@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <root release="3.0" version="3">
-	<announcement text="Exhausted ~dev_version~\rby Ryan Hagelstrom 2021-2024" font="emotefont" icon="Exhausted" />
+	<announcement text="Exhausted ~dev_version~\rby Ryan Hagelstrom 2021-2025" font="emotefont" icon="Exhausted" />
 	<properties>
 		<loadorder>120</loadorder>
 		<name>Feature: Exhausted</name>

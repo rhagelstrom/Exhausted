@@ -1,13 +1,13 @@
 -- Author: Ryan Hagelstrom
--- Copyright © 2021-2024
+-- Copyright © 2021-2025
 -- Please see the license file included with this distribution for
 -- attribution and copyright information.
 --
--- luacheck: globals onInit onTabletopInit onClose cleanExhaustionEffect sumExhaustion updateEffect exhaustionText
+-- luacheck: globals onInit onTabletopInit onClose cleanExhaustionEffect sumExhaustion updateEffect
 -- luacheck: globals customReduceExhaustion customRest customAddEffect customApplyDamage customParseEffect
 -- luacheck: globals newDND customGetEffectsBonus newDNDModExhaustion customOutputResult customOnCastSave customCheckModRoll
 -- luacheck: globals customModAttack customModSave customModInit tireless customPerformAction
--- luacheck: globals EffectsManagerExhausted bOneDnD
+-- luacheck: globals EffectsManagerExhausted is2024
 local rest = nil;
 local addEffect = nil;
 local applyDamage = nil;
@@ -24,7 +24,7 @@ local onCastSave = nil;
 local outputResult = nil;
 local performAction = nil;
 
-bOneDnD = false;
+local bOneDnD = false;
 
 function onInit()
     rest = CharManager.rest;
@@ -193,7 +193,6 @@ function sumExhaustion(rActor, nExhaustionLevel)
                 rEffectComp.mod = rEffectComp.mod + nExhaustionLevel;
                 aEffectComps[i] = rEffectComp.type .. ': ' .. tostring(rEffectComp.mod);
                 sEffect = EffectManager.rebuildParsedEffect(aEffectComps);
-                sEffect = EffectsManagerExhausted.exhaustionText(sEffect, rActor, rEffectComp.mod);
                 EffectsManagerExhausted.updateEffect(nodeCT, nodeEffect, sEffect);
                 nSummed = rEffectComp.mod;
             end
@@ -208,61 +207,6 @@ function updateEffect(nodeActor, nodeEffect, sLabel)
     local sMessage = string.format('%s [\'%s\'] -> [%s]', Interface.getString('effect_label'), sLabel,
                                    Interface.getString('effect_status_updated'));
     EffectManager.message(sMessage, nodeActor, bGMOnly);
-end
-
--- Add extra text and also comptibility with Mad Nomads Character Sheet Effects Display Extension
--- The real solution is for mad nomad support exhaustion in his code.
-function exhaustionText(sEffect, rActor, nLevel)
-    if OptionsManager.isOption('VERBOSE_EXHAUSTION', 'off') or OptionsManager.isOption('VERBOSE_EXHAUSTION', 'Off') or
-        OptionsManager.isOption('GAVE', '2024') or not OptionsManager.isOption('ONE_DND_EXHAUSTION', 'off') then
-        return sEffect;
-    end
-    local sNodeType, nodeActor = ActorManager.getTypeAndNode(rActor);
-    if sNodeType == 'pc' then
-        local nSpeed = DB.getValue(nodeActor, 'speed.base', 0);
-        local nHPTotal = DB.getValue(nodeActor, 'hp.total', 0);
-        local sDisCheck =
-            '; DISCHK: strength; DISCHK: dexterity; DISCHK: constitution; DISCHK: intelligence; DISCHK: wisdom; DISCHK: charisma';
-        local sDisSave =
-            '; DISATK; DISSAV: strength; DISSAV: dexterity; DISSAV: constitution; DISSAV: intelligence; DISSAV: wisdom; DISSAV: charisma';
-        local sSpeed = '; SPEED: -';
-        local sHPMax = '; MAXHP: -';
-        sEffect = sEffect:gsub(';?%s?SPEED:?%s?-?%d+;?', '');
-        sEffect = sEffect:gsub(';?%s?SPEED:?%s?-?%d+;?', '');
-        sEffect = sEffect:gsub(';?%s?DISATK;%sDISSAV:%sstrength;%sDISSAV:%sdexterity;%sDISSAV:%sconstitution;' ..
-                                   '%sDISSAV:%sintelligence;%sDISSAV:%swisdom;%sDISSAV:%scharisma;?', '');
-
-        if OptionsManager.isOption('VERBOSE_EXHAUSTION', 'verbose') and not sEffect:match(sDisCheck) then
-            sEffect = sEffect .. sDisCheck;
-        end
-        if (nLevel == 2) then
-            sEffect = sEffect .. sSpeed .. tostring(math.ceil(nSpeed / 2));
-        elseif (nLevel == 3) then
-            if OptionsManager.isOption('VERBOSE_EXHAUSTION', 'verbose') then
-                sEffect = sEffect .. sDisSave;
-            end
-            sEffect = sEffect .. sSpeed .. tostring(math.ceil(nSpeed / 2));
-        elseif (nLevel == 4) then
-            if OptionsManager.isOption('VERBOSE_EXHAUSTION', 'verbose') then
-                sEffect = sEffect .. sDisSave;
-            end
-            sEffect = sEffect .. sHPMax .. tostring(math.ceil(nHPTotal / 2));
-            sEffect = sEffect .. sSpeed .. tostring(math.ceil(nSpeed / 2));
-        elseif (nLevel == 5) then
-            if OptionsManager.isOption('VERBOSE_EXHAUSTION', 'verbose') then
-                sEffect = sEffect .. sDisSave;
-            end
-            sEffect = sEffect .. sHPMax .. tostring(math.ceil(nHPTotal / 2));
-            sEffect = sEffect .. sSpeed .. tostring(nSpeed);
-        elseif (nLevel >= 6) then
-            if OptionsManager.isOption('VERBOSE_EXHAUSTION', 'verbose') then
-                sEffect = sEffect .. sDisSave;
-            end
-            sEffect = sEffect .. sHPMax .. tostring(nHPTotal);
-            sEffect = sEffect .. sSpeed .. tostring(nSpeed);
-        end
-    end
-    return sEffect;
 end
 
 -- Replace SW code to reduce exhaustion on Rest
@@ -282,7 +226,6 @@ function customReduceExhaustion(nodeCT)
                         if rEffectComp.mod >= 1 then
                             aEffectComps[i] = rEffectComp.type .. ': ' .. tostring(rEffectComp.mod);
                             sEffect = EffectManager.rebuildParsedEffect(aEffectComps);
-                            sEffect = EffectsManagerExhausted.exhaustionText(sEffect, rActor, rEffectComp.mod);
                             EffectsManagerExhausted.updateEffect(nodeCT, nodeEffect, sEffect);
                         else
                             EffectManager.expireEffect(nodeCT, nodeEffect, 0);
@@ -322,7 +265,6 @@ function customAddEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg)
         if nExhausted then
             nExhaustionLevel = nExhausted;
         end
-        rNewEffect.sName = EffectsManagerExhausted.exhaustionText(rNewEffect.sName, rActor, nExhaustionLevel);
     end
     if not nExhausted then
         addEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg);
@@ -584,4 +526,8 @@ function customPerformAction(draginfo, rActor, rRoll)
         EffectsManagerExhausted.newDNDModExhaustion(rActor, nil, rRoll);
     end
     performAction(draginfo, rActor, rRoll);
+end
+
+function is2024()
+    return bOneDnD;
 end
