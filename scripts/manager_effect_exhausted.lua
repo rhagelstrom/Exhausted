@@ -251,7 +251,9 @@ function customAddEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg)
     end
     if nExhaustionLevel > 0 then
         local rActor = ActorManager.resolveActor(nodeCT);
-        EffectsManagerExhausted.sumExhaustion(rActor, nExhaustionLevel);
+        if not EffectsManagerExhausted.sumExhaustion(rActor, nExhaustionLevel) then
+            addEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg);
+        end;
     else
         addEffect(sUser, sIdentity, nodeCT, rNewEffect, bShowMsg);
     end
