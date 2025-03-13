@@ -6,7 +6,7 @@
 -- luacheck: globals onInit onTabletopInit onClose cleanExhaustionEffect sumExhaustion updateEffect
 -- luacheck: globals customReduceExhaustion customRest customAddEffect customApplyDamage customParseEffect
 -- luacheck: globals newDND customGetEffectsBonus newDNDModExhaustion customOutputResult customOnCastSave customCheckModRoll
--- luacheck: globals customModAttack customModSave customModInit tireless customPerformAction
+-- luacheck: globals customModAttack customModSave tireless customPerformAction
 -- luacheck: globals EffectsManagerExhausted is2024
 local rest = nil;
 local addEffect = nil;
@@ -16,7 +16,6 @@ local reduceExhaustion = nil;
 
 -- 2024 DND
 local checkModRoll = nil;
-local initModRoll = nil;
 local modAttack = nil;
 local modSave = nil;
 local getEffectsBonus = nil;
@@ -85,7 +84,6 @@ function onTabletopInit()
     getEffectsBonus = EffectManager5E.getEffectsBonus;
     onCastSave = ActionPower.onCastSave;
     outputResult = ActionsManager.outputResult;
-    initModRoll = ActionInit.modRoll;
     performAction = ActionsManager.performAction;
     newDND();
 end
@@ -104,7 +102,6 @@ function onClose()
     EffectManager5E.getEffectsBonus = getEffectsBonus;
     ActionPower.onCastSave = onCastSave;
     ActionsManager.outputResult = outputResult;
-    ActionInit.modRoll = initModRoll;
 
     ActionsManager.registerModHandler('check', ActionCheck.modRoll);
     ActionsManager.registerModHandler('skill', ActionSkill.modRoll);
@@ -114,7 +111,6 @@ function onClose()
     ActionsManager.registerModHandler('death_auto', ActionSave.modSave);
     ActionsManager.registerModHandler('concentration', ActionSave.modSave);
     ActionsManager.registerModHandler('systemshock', ActionSave.modSave);
-    ActionsManager.registerModHandler('init', ActionInit.modRoll);
 end
 
 function cleanExhaustionEffect(sUser, _, nodeCT, rNewEffect, bShowMsg)
@@ -360,7 +356,6 @@ function newDND()
         EffectManager5E.getEffectsBonus = customGetEffectsBonus;
 
         ActionsManager.outputResult = customOutputResult;
-        ActionInit.modRoll = customModInit;
 
         ActionsManager.registerModHandler('check', customCheckModRoll);
         ActionsManager.registerModHandler('attack', customModAttack);
@@ -369,7 +364,6 @@ function newDND()
         ActionsManager.registerModHandler('death_auto', customModSave);
         ActionsManager.registerModHandler('concentration', customModSave);
         ActionsManager.registerModHandler('systemshock', customModSave);
-        ActionsManager.registerModHandler('init', customModInit);
 
         ActionsManager.performAction = customPerformAction;
     elseif bOneDnD and not (OptionsManager.isOption('GAVE', '2024') or not OptionsManager.isOption('ONE_DND_EXHAUSTION', 'off')) then
@@ -379,7 +373,6 @@ function newDND()
         ActionSave.modSave = modSave;
         EffectManager5E.getEffectsBonus = getEffectsBonus;
         ActionsManager.outputResult = outputResult;
-        ActionInit.modRoll = initModRoll;
 
         ActionsManager.registerModHandler('check', checkModRoll);
         ActionsManager.registerModHandler('attack', modAttack);
@@ -388,7 +381,6 @@ function newDND()
         ActionsManager.registerModHandler('death_auto', modSave);
         ActionsManager.registerModHandler('concentration', modSave);
         ActionsManager.registerModHandler('systemshock', modSave);
-        ActionsManager.registerModHandler('init', initModRoll);
 
         ActionsManager.performAction = performAction;
     end
@@ -482,11 +474,6 @@ end
 function customModSave(rSource, rTarget, rRoll)
     EffectsManagerExhausted.newDNDModExhaustion(rSource, rTarget, rRoll);
     return modSave(rSource, rTarget, rRoll);
-end
-
-function customModInit(rSource, rTarget, rRoll)
-    EffectsManagerExhausted.newDNDModExhaustion(rSource, rTarget, rRoll);
-    return initModRoll(rSource, rTarget, rRoll);
 end
 
 function tireless(nodeCT)
